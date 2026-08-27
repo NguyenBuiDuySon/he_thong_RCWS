@@ -1,0 +1,6 @@
+camera:
+  source: 1
+  width: 1280
+  height: 720
+  fps: 30
+  backend: dshow
