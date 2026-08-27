@@ -12,7 +12,7 @@ from app.config import CameraConfig
 @dataclass(slots=True)
 class FramePacket:
     frame_id: int
-    timestamp_ns: int
+    received_at_ns: int
     image: np.ndarray
 
 
@@ -27,7 +27,6 @@ class Camera:
         self,
         config: CameraConfig,
     ) -> None:
-
         backend = self._BACKENDS.get(
             config.backend
         )
@@ -45,7 +44,7 @@ class Camera:
 
         if not self._capture.isOpened():
             raise RuntimeError(
-                f"Cannot open camera "
+                f"Cannot open camera: "
                 f"{config.source}"
             )
 
@@ -69,21 +68,53 @@ class Camera:
     def read(
         self,
     ) -> FramePacket | None:
-
         ok, image = self._capture.read()
+
+        received_at_ns = perf_counter_ns()
 
         if not ok or image is None:
             return None
 
         packet = FramePacket(
             frame_id=self._frame_id,
-            timestamp_ns=perf_counter_ns(),
+            received_at_ns=received_at_ns,
             image=image,
         )
 
         self._frame_id += 1
 
         return packet
+
+    @property
+    def backend_name(self) -> str:
+        try:
+            return self._capture.getBackendName()
+        except cv2.error:
+            return "unknown"
+
+    @property
+    def actual_width(self) -> int:
+        return int(
+            self._capture.get(
+                cv2.CAP_PROP_FRAME_WIDTH
+            )
+        )
+
+    @property
+    def actual_height(self) -> int:
+        return int(
+            self._capture.get(
+                cv2.CAP_PROP_FRAME_HEIGHT
+            )
+        )
+
+    @property
+    def actual_fps(self) -> float:
+        return float(
+            self._capture.get(
+                cv2.CAP_PROP_FPS
+            )
+        )
 
     def close(self) -> None:
         self._capture.release()

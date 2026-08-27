@@ -4,3 +4,7 @@ camera:
   height: 720
   fps: 30
   backend: dshow
+
+display:
+  window_name: "Vision Tracking System"
+  show_crosshair: true
