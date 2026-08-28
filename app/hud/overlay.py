@@ -59,6 +59,7 @@ def draw_status(
     fps: float,
     frame_age_ms: float,
     backend: str,
+    dropped_frames: int,
     show_crosshair: bool,
 ) -> None:
     if show_crosshair:
@@ -73,6 +74,7 @@ def draw_status(
         f"AGE: {frame_age_ms:.2f} ms",
         f"RES: {width}x{height}",
         f"BACKEND: {backend}",
+        f"DROPPED: {dropped_frames}",
     )
 
     y = 28
