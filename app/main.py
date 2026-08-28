@@ -7,6 +7,12 @@ from app.capture.latest_frame import LatestFrameStream
 from app.config import load_config
 from app.hud.overlay import draw_status
 from app.telemetry.fps import FpsMeter
+from app.detection.yolo_detector import YoloDetector
+from app.hud.overlay import (
+    draw_detections,
+    draw_status,
+)
+
 
 from time import sleep
 
@@ -19,6 +25,9 @@ def main() -> None:
         config.camera
     )
 
+    detector = YoloDetector(
+    config.detector
+)
     stream = LatestFrameStream(
         camera
     )
@@ -51,12 +60,27 @@ def main() -> None:
         "\nCapture thread starting...\n"
     )
 
+    print(
+    f"Detector : {config.detector.model}"
+)
+
+    print(
+        f"Device   : {detector.device}"
+    )
+
+    print(
+        f"Precision: {detector.precision}"
+    )
     stream.start()
 
     try:
         while True:
             packet = stream.read(
                 timeout=1.0
+            )
+
+            batch = detector.detect(
+                packet
             )
 
             if packet is None:
@@ -72,8 +96,14 @@ def main() -> None:
                 - packet.received_at_ns
             ) / 1_000_000
             #sleep(0.1)
-            draw_status(
+
+            draw_detections(
                 packet.image,
+                batch,
+            )
+
+            draw_status(
+                 packet.image,
                 frame_id=packet.frame_id,
                 fps=fps,
                 frame_age_ms=frame_age_ms,
@@ -81,6 +111,12 @@ def main() -> None:
                 dropped_frames=(
                     stream.dropped_frames
                 ),
+                inference_ms=batch.inference_ms,
+                detection_count=len(
+                    batch.detections
+                ),
+                detector_device=detector.device,
+                detector_precision=detector.precision,
                 show_crosshair=(
                     config
                     .display

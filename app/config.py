@@ -14,6 +14,14 @@ class CameraConfig:
     fps: int
     backend: str
 
+@dataclass(frozen=True, slots=True)
+class DetectorConfig:
+    model: str
+    device: str
+    precision: str
+    imgsz: int
+    confidence: float
+    max_det: int
 
 @dataclass(frozen=True, slots=True)
 class DisplayConfig:
@@ -24,6 +32,7 @@ class DisplayConfig:
 @dataclass(frozen=True, slots=True)
 class AppConfig:
     camera: CameraConfig
+    detector: DetectorConfig
     display: DisplayConfig
 
 
@@ -38,6 +47,7 @@ def load_config(path: str | Path) -> AppConfig:
 
     camera = raw["camera"]
     display = raw["display"]
+    detector = raw["detector"]
 
     return AppConfig(
         camera=CameraConfig(
@@ -49,6 +59,25 @@ def load_config(path: str | Path) -> AppConfig:
                 camera.get("backend", "auto")
             ).lower(),
         ),
+        detector=DetectorConfig(
+            model=str(detector["model"]),
+            device=str(
+                detector.get("device", "auto")
+            ).lower(),
+            precision=str(
+                detector.get("precision", "auto")
+            ).lower(),
+            imgsz=int(
+                detector.get("imgsz", 640)
+            ),
+            confidence=float(
+                detector.get("confidence", 0.25)
+            ),
+            max_det=int(
+                detector.get("max_det", 100)
+            ),
+        ),
+
         display=DisplayConfig(
             window_name=str(
                 display["window_name"]

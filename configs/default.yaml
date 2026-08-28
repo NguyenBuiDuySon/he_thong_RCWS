@@ -5,6 +5,15 @@ camera:
   fps: 30
   backend: dshow
 
+detector:
+  model: yolo26n.pt
+  device: auto
+  precision: auto
+  imgsz: 640
+  confidence: 0.25
+  max_det: 100
+
+
 display:
   window_name: "Vision Tracking System"
   show_crosshair: true

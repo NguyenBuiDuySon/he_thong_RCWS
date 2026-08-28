@@ -1,4 +1,5 @@
 from __future__ import annotations
+from app.detection.types import DetectionBatch
 
 import cv2
 import numpy as np
@@ -61,6 +62,10 @@ def draw_status(
     backend: str,
     dropped_frames: int,
     show_crosshair: bool,
+    inference_ms: float,
+    detection_count: int,
+    detector_device: str,
+    detector_precision: str,
 ) -> None:
     if show_crosshair:
         draw_crosshair(image)
@@ -75,6 +80,10 @@ def draw_status(
         f"RES: {width}x{height}",
         f"BACKEND: {backend}",
         f"DROPPED: {dropped_frames}",
+        f"DETECTIONS: {detection_count}",
+        f"INFERENCE: {inference_ms:.2f} ms",
+        f"DEVICE: {detector_device}",
+        f"PRECISION: {detector_precision}",
     )
 
     y = 28
@@ -92,3 +101,48 @@ def draw_status(
         )
 
         y += 24
+
+def draw_detections(
+    image: np.ndarray,
+    batch: DetectionBatch,
+) -> None:
+    for detection in batch.detections:
+        x1 = int(detection.x1)
+        y1 = int(detection.y1)
+        x2 = int(detection.x2)
+        y2 = int(detection.y2)
+
+        cx = int(detection.center_x)
+        cy = int(detection.center_y)
+
+        cv2.rectangle(
+            image,
+            (x1, y1),
+            (x2, y2),
+            GREEN,
+            1,
+        )
+
+        label = (
+            f"{detection.class_name} "
+            f"{detection.confidence:.2f}"
+        )
+
+        cv2.putText(
+            image,
+            label,
+            (x1, max(20, y1 - 7)),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            0.50,
+            GREEN,
+            1,
+            cv2.LINE_AA,
+        )
+
+        cv2.circle(
+            image,
+            (cx, cy),
+            3,
+            GREEN,
+            -1,
+        )
