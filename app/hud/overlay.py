@@ -63,6 +63,8 @@ def draw_status(
     dropped_frames: int,
     show_crosshair: bool,
     inference_ms: float,
+    model_inference_ms: float,
+    detector_total_ms: float,
     detection_count: int,
     detector_device: str,
     detector_precision: str,
@@ -82,6 +84,8 @@ def draw_status(
         f"DROPPED: {dropped_frames}",
         f"DETECTIONS: {detection_count}",
         f"INFERENCE: {inference_ms:.2f} ms",
+        f"MODEL: {model_inference_ms:.2f} ms",
+        f"DET TOTAL: {detector_total_ms:.2f} ms",
         f"DEVICE: {detector_device}",
         f"PRECISION: {detector_precision}",
     )

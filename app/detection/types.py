@@ -34,5 +34,8 @@ class Detection:
 @dataclass(frozen=True, slots=True)
 class DetectionBatch:
     frame_id: int
+    preprocess_ms: float
     inference_ms: float
+    postprocess_ms: float
+    total_ms: float
     detections: tuple[Detection, ...]

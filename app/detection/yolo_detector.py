@@ -44,32 +44,56 @@ class YoloDetector(Detector):
         packet: FramePacket,
     ) -> DetectionBatch:
         started_ns = perf_counter_ns()
-
         results = self._model.predict(
             source=packet.image,
             device=self._device,
             imgsz=self._config.imgsz,
             conf=self._config.confidence,
             max_det=self._config.max_det,
-            #half=self._use_half,
             quantize=self._precision,
             verbose=False,
         )
 
         finished_ns = perf_counter_ns()
 
-        detections: list[Detection] = []
+        total_ms = (
+            finished_ns - started_ns
+        ) / 1_000_000
 
         if not results:
             return DetectionBatch(
                 frame_id=packet.frame_id,
-                inference_ms=(
-                    finished_ns - started_ns
-                ) / 1_000_000,
+                preprocess_ms=0.0,
+                inference_ms=0.0,
+                postprocess_ms=0.0,
+                total_ms=total_ms,
                 detections=(),
             )
 
         result = results[0]
+
+        preprocess_ms = float(
+            result.speed.get(
+                "preprocess",
+                0.0,
+            )
+        )
+
+        inference_ms = float(
+            result.speed.get(
+                "inference",
+                0.0,
+            )
+        )
+
+        postprocess_ms = float(
+            result.speed.get(
+                "postprocess",
+                0.0,
+            )
+        )
+
+        detections: list[Detection] = []
 
         boxes = result.boxes
 
@@ -96,7 +120,11 @@ class YoloDetector(Detector):
                 .astype(int)
             )
 
-            for coords, confidence, class_id in zip(
+            for (
+                coords,
+                confidence,
+                class_id,
+            ) in zip(
                 xyxy,
                 confidences,
                 class_ids,
@@ -104,15 +132,17 @@ class YoloDetector(Detector):
             ):
                 x1, y1, x2, y2 = coords
 
-                class_name = str(
-                    result.names[class_id]
-                )
-
                 detections.append(
                     Detection(
                         class_id=int(class_id),
-                        class_name=class_name,
-                        confidence=float(confidence),
+                        class_name=str(
+                            result.names[
+                                class_id
+                            ]
+                        ),
+                        confidence=float(
+                            confidence
+                        ),
                         x1=float(x1),
                         y1=float(y1),
                         x2=float(x2),
@@ -122,10 +152,13 @@ class YoloDetector(Detector):
 
         return DetectionBatch(
             frame_id=packet.frame_id,
-            inference_ms=(
-                finished_ns - started_ns
-            ) / 1_000_000,
-            detections=tuple(detections),
+            preprocess_ms=preprocess_ms,
+            inference_ms=inference_ms,
+            postprocess_ms=postprocess_ms,
+            total_ms=total_ms,
+            detections=tuple(
+                detections
+            ),
         )
 
     @staticmethod

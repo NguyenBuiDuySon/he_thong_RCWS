@@ -122,6 +122,12 @@ def main() -> None:
                     .display
                     .show_crosshair
                 ),
+                model_inference_ms=(
+                    batch.inference_ms
+                ),
+                detector_total_ms=(
+                    batch.total_ms
+                ),
             )
 
             cv2.imshow(
@@ -129,7 +135,7 @@ def main() -> None:
                 packet.image,
             )
 
-            key = (
+            key = (  
                 cv2.waitKey(1)
                 & 0xFF
             )
