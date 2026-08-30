@@ -1,11 +1,11 @@
 from __future__ import annotations
-from app.detection.types import DetectionBatch
-from app.capture.latest_frame import StreamStats
-from app.telemetry.live import LiveTelemetrySnapshot
 
 import cv2
 import numpy as np
 
+from app.capture.latest_frame import StreamStats
+from app.detection.types import DetectionBatch
+from app.telemetry.live import LiveTelemetrySnapshot
 
 GREEN = (0, 255, 0)
 WHITE = (230, 230, 230)
@@ -75,48 +75,25 @@ def draw_status(
     lines = (
         "MODE: VIDEO",
         f"FRAME: {frame_id}",
-
-        (
-            f"CAP FPS: "
-            f"{stream_stats.captured_fps:.1f}"
-        ),
-
-        (
-            f"PIPE FPS: "
-            f"{telemetry.pipeline_fps:.1f}"
-        ),
-
-        (
-            f"AGE: "
-            f"{telemetry.frame_age_ms:.1f} ms "
-            f"P95 {telemetry.frame_age_p95_ms:.1f}"
-        ),
-
+        (f"CAP FPS: {stream_stats.captured_fps:.1f}"),
+        (f"PIPE FPS: {telemetry.pipeline_fps:.1f}"),
+        (f"AGE: {telemetry.frame_age_ms:.1f} ms P95 {telemetry.frame_age_p95_ms:.1f}"),
         f"RES: {width}x{height}",
         f"BACKEND: {backend}",
-
-        (
-            f"DROP: "
-            f"{stream_stats.dropped_frames} "
-            f"({stream_stats.drop_rate_pct:.2f}%)"
-        ),
-
+        (f"DROP: {stream_stats.dropped_frames} ({stream_stats.drop_rate_pct:.2f}%)"),
         f"DETECTIONS: {detection_count}",
-
         (
             f"MODEL: "
             f"{telemetry.model_inference_ms:.1f} ms "
             f"P95 "
             f"{telemetry.model_inference_p95_ms:.1f}"
         ),
-
         (
             f"DET TOTAL: "
             f"{telemetry.detector_total_ms:.1f} ms "
             f"P95 "
             f"{telemetry.detector_total_p95_ms:.1f}"
         ),
-
         f"DEVICE: {detector_device}",
         f"PRECISION: {detector_precision}",
     )
@@ -136,6 +113,7 @@ def draw_status(
         )
 
         y += 24
+
 
 def draw_detections(
     image: np.ndarray,
@@ -158,10 +136,7 @@ def draw_detections(
             1,
         )
 
-        label = (
-            f"{detection.class_name} "
-            f"{detection.confidence:.2f}"
-        )
+        label = f"{detection.class_name} {detection.confidence:.2f}"
 
         cv2.putText(
             image,

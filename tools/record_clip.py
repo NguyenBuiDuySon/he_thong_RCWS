@@ -5,7 +5,6 @@ from pathlib import Path
 
 import cv2
 
-
 WIDTH = 1280
 HEIGHT = 720
 FPS = 30
@@ -19,13 +18,9 @@ def main() -> None:
         exist_ok=True,
     )
 
-    timestamp = datetime.now().strftime(
-        "%Y%m%d_%H%M%S"
-    )
+    timestamp = datetime.now().astimezone().strftime("%Y%m%d_%H%M%S")
 
-    output_path = OUTPUT_DIR / (
-        f"test_{timestamp}.avi"
-    )
+    output_path = OUTPUT_DIR / (f"test_{timestamp}.avi")
 
     camera = cv2.VideoCapture(
         0,
@@ -33,9 +28,7 @@ def main() -> None:
     )
 
     if not camera.isOpened():
-        raise RuntimeError(
-            "Cannot open camera"
-        )
+        raise RuntimeError("Cannot open camera")
 
     camera.set(
         cv2.CAP_PROP_FRAME_WIDTH,
@@ -52,9 +45,7 @@ def main() -> None:
         FPS,
     )
 
-    fourcc = cv2.VideoWriter_fourcc(
-        *"MJPG"
-    )
+    fourcc = cv2.VideoWriter_fourcc(*"MJPG")
 
     writer = cv2.VideoWriter(
         str(output_path),
@@ -66,28 +57,20 @@ def main() -> None:
     if not writer.isOpened():
         camera.release()
 
-        raise RuntimeError(
-            "Cannot open VideoWriter"
-        )
+        raise RuntimeError("Cannot open VideoWriter")
 
     frame_count = 0
 
-    print(
-        f"Recording to: {output_path}"
-    )
+    print(f"Recording to: {output_path}")
 
-    print(
-        "Press Q or ESC to stop."
-    )
+    print("Press Q or ESC to stop.")
 
     try:
         while True:
             ok, frame = camera.read()
 
             if not ok:
-                print(
-                    "Camera read failed"
-                )
+                print("Camera read failed")
                 break
 
             writer.write(frame)
@@ -137,13 +120,9 @@ def main() -> None:
 
         cv2.destroyAllWindows()
 
-    print(
-        f"Saved: {output_path}"
-    )
+    print(f"Saved: {output_path}")
 
-    print(
-        f"Frames: {frame_count}"
-    )
+    print(f"Frames: {frame_count}")
 
 
 if __name__ == "__main__":

@@ -1,1 +1,22 @@
-/.venv
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+
+# IDE
+.vscode/
+.idea/
+
+# Runtime output
+runs/
+
+# Local recordings
+data/recordings/*
+!data/recordings/.gitkeep
+
+# Exported deployment models
+*.engine
+*.onnx
+
+# Temporary files
+*.log

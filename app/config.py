@@ -44,6 +44,7 @@ class AppConfig:
     telemetry: TelemetryConfig
     display: DisplayConfig
 
+
 def load_config(
     path: str | Path,
 ) -> AppConfig:
@@ -73,11 +74,8 @@ def load_config(
                 )
             ).lower(),
         ),
-
         detector=DetectorConfig(
-            model=str(
-                detector["model"]
-            ),
+            model=str(detector["model"]),
             device=str(
                 detector.get(
                     "device",
@@ -118,7 +116,6 @@ def load_config(
                 ),
             ),
         ),
-
         telemetry=TelemetryConfig(
             rolling_window_frames=max(
                 10,
@@ -130,11 +127,8 @@ def load_config(
                 ),
             ),
         ),
-
         display=DisplayConfig(
-            window_name=str(
-                display["window_name"]
-            ),
+            window_name=str(display["window_name"]),
             show_crosshair=bool(
                 display.get(
                     "show_crosshair",

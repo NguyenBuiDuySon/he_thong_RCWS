@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from time import perf_counter_ns
+from typing import ClassVar
 
 import cv2
 import numpy as np
@@ -17,7 +18,7 @@ class FramePacket:
 
 
 class Camera:
-    _BACKENDS = {
+    _BACKENDS: ClassVar[dict[str, int]] = {
         "auto": cv2.CAP_ANY,
         "dshow": cv2.CAP_DSHOW,
         "msmf": cv2.CAP_MSMF,
@@ -27,15 +28,10 @@ class Camera:
         self,
         config: CameraConfig,
     ) -> None:
-        backend = self._BACKENDS.get(
-            config.backend
-        )
+        backend = self._BACKENDS.get(config.backend)
 
         if backend is None:
-            raise ValueError(
-                f"Unsupported backend: "
-                f"{config.backend}"
-            )
+            raise ValueError(f"Unsupported backend: {config.backend}")
 
         self._capture = cv2.VideoCapture(
             config.source,
@@ -43,10 +39,7 @@ class Camera:
         )
 
         if not self._capture.isOpened():
-            raise RuntimeError(
-                f"Cannot open camera: "
-                f"{config.source}"
-            )
+            raise RuntimeError(f"Cannot open camera: {config.source}")
 
         self._capture.set(
             cv2.CAP_PROP_FRAME_WIDTH,
@@ -94,27 +87,15 @@ class Camera:
 
     @property
     def actual_width(self) -> int:
-        return int(
-            self._capture.get(
-                cv2.CAP_PROP_FRAME_WIDTH
-            )
-        )
+        return int(self._capture.get(cv2.CAP_PROP_FRAME_WIDTH))
 
     @property
     def actual_height(self) -> int:
-        return int(
-            self._capture.get(
-                cv2.CAP_PROP_FRAME_HEIGHT
-            )
-        )
+        return int(self._capture.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
     @property
     def actual_fps(self) -> float:
-        return float(
-            self._capture.get(
-                cv2.CAP_PROP_FPS
-            )
-        )
+        return float(self._capture.get(cv2.CAP_PROP_FPS))
 
     def close(self) -> None:
         self._capture.release()

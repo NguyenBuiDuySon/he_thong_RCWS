@@ -1,8 +1,9 @@
 from __future__ import annotations
 
+from collections import deque
 from dataclasses import dataclass
 from statistics import fmean, median, quantiles
-from collections import deque
+
 
 @dataclass(
     frozen=True,
@@ -39,24 +40,17 @@ class MetricSeries:
         self,
         value: float,
     ) -> None:
-        self._values.append(
-            float(value)
-        )
+        self._values.append(float(value))
 
     @property
     def count(self) -> int:
-        return len(
-            self._values
-        )
+        return len(self._values)
 
     def summarize(
         self,
     ) -> MetricSummary:
         if not self._values:
-            raise ValueError(
-                "Cannot summarize "
-                "an empty metric series."
-            )
+            raise ValueError("Cannot summarize an empty metric series.")
 
         if len(self._values) == 1:
             value = self._values[0]
@@ -78,24 +72,15 @@ class MetricSeries:
         )
 
         return MetricSummary(
-            count=len(
-                self._values
-            ),
-            minimum=min(
-                self._values
-            ),
-            maximum=max(
-                self._values
-            ),
-            mean=fmean(
-                self._values
-            ),
-            p50=median(
-                self._values
-            ),
+            count=len(self._values),
+            minimum=min(self._values),
+            maximum=max(self._values),
+            mean=fmean(self._values),
+            p50=median(self._values),
             p95=percentile_cuts[94],
             p99=percentile_cuts[98],
         )
+
 
 class RollingMetric:
     def __init__(
@@ -103,36 +88,26 @@ class RollingMetric:
         window_size: int = 120,
     ) -> None:
         if window_size < 2:
-            raise ValueError(
-                "window_size must be >= 2"
-            )
+            raise ValueError("window_size must be >= 2")
 
-        self._values: deque[float] = deque(
-            maxlen=window_size
-        )
+        self._values: deque[float] = deque(maxlen=window_size)
 
     @property
     def count(self) -> int:
-        return len(
-            self._values
-        )
+        return len(self._values)
 
     def add(
         self,
         value: float,
     ) -> None:
-        self._values.append(
-            float(value)
-        )
+        self._values.append(float(value))
 
     @property
     def mean(self) -> float:
         if not self._values:
             return 0.0
 
-        return fmean(
-            self._values
-        )
+        return fmean(self._values)
 
     @property
     def p95(self) -> float:
