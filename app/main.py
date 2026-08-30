@@ -1,12 +1,13 @@
 from time import perf_counter_ns
 
 import cv2
-
+from time import sleep
 from app.capture.camera import Camera
 from app.capture.latest_frame import LatestFrameStream
 from app.config import load_config
 from app.hud.overlay import draw_status
 from app.telemetry.fps import FpsMeter
+from app.telemetry.live import LiveTelemetry
 from app.detection.yolo_detector import YoloDetector
 from app.hud.overlay import (
     draw_detections,
@@ -27,9 +28,37 @@ def main() -> None:
 
     detector = YoloDetector(
     config.detector
-)
+    )
+
+    warmup_packet = camera.read()
+
+    if warmup_packet is None:
+        raise RuntimeError(
+            "Cannot read detector warm-up frame."
+        )
+
+    print(
+        f"Detector warm-up: "
+        f"{config.detector.warmup_iterations} "
+        f"iterations..."
+    )
+
+    detector.warmup(
+        warmup_packet,
+        config.detector.warmup_iterations,
+    )
+
+    print(
+        "Detector warm-up complete."
+    )
+
     stream = LatestFrameStream(
-        camera
+       camera,
+        rate_window_frames=(
+            config
+            .telemetry
+            .rolling_window_frames
+    ),
     )
 
     fps_meter = FpsMeter(
@@ -71,6 +100,15 @@ def main() -> None:
     print(
         f"Precision: {detector.precision}"
     )
+
+    live_telemetry = LiveTelemetry(
+        window_size=(
+            config
+            .telemetry
+            .rolling_window_frames
+        )
+)
+
     stream.start()
 
     try:
@@ -78,6 +116,8 @@ def main() -> None:
             packet = stream.read(
                 timeout=1.0
             )
+
+            sleep(0.05)
 
             batch = detector.detect(
                 packet
@@ -97,36 +137,44 @@ def main() -> None:
             ) / 1_000_000
             #sleep(0.1)
 
+            telemetry = live_telemetry.update(
+                model_inference_ms=(
+                    batch.inference_ms
+                ),
+                detector_total_ms=(
+                    batch.total_ms
+                ),
+                frame_age_ms=(
+                    frame_age_ms
+                ),
+            )
+
+            stream_stats = stream.stats
+
             draw_detections(
                 packet.image,
                 batch,
             )
 
             draw_status(
-                 packet.image,
+                packet.image,
                 frame_id=packet.frame_id,
-                fps=fps,
-                frame_age_ms=frame_age_ms,
                 backend=camera.backend_name,
-                dropped_frames=(
-                    stream.dropped_frames
-                ),
-                inference_ms=batch.inference_ms,
+                stream_stats=stream_stats,
+                telemetry=telemetry,
                 detection_count=len(
                     batch.detections
                 ),
-                detector_device=detector.device,
-                detector_precision=detector.precision,
+                detector_device=(
+                    detector.device
+                ),
+                detector_precision=(
+                    detector.precision
+                ),
                 show_crosshair=(
                     config
                     .display
                     .show_crosshair
-                ),
-                model_inference_ms=(
-                    batch.inference_ms
-                ),
-                detector_total_ms=(
-                    batch.total_ms
                 ),
             )
 

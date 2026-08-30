@@ -12,7 +12,10 @@ detector:
   imgsz: 640
   confidence: 0.25
   max_det: 100
+  warmup_iterations: 10
 
+telemetry:
+  rolling_window_frames: 120
 
 display:
   window_name: "Vision Tracking System"

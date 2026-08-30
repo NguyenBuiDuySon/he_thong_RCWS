@@ -13,3 +13,13 @@ class Detector(ABC):
         packet: FramePacket,
     ) -> DetectionBatch:
         """Detect objects in one frame."""
+
+    def warmup(
+        self,
+        packet: FramePacket,
+        iterations: int = 10,
+    ) -> None:
+        for _ in range(
+            max(0, iterations)
+        ):
+            self.detect(packet)

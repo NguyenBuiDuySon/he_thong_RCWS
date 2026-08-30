@@ -1,5 +1,7 @@
 from __future__ import annotations
 from app.detection.types import DetectionBatch
+from app.capture.latest_frame import StreamStats
+from app.telemetry.live import LiveTelemetrySnapshot
 
 import cv2
 import numpy as np
@@ -57,17 +59,13 @@ def draw_status(
     image: np.ndarray,
     *,
     frame_id: int,
-    fps: float,
-    frame_age_ms: float,
     backend: str,
-    dropped_frames: int,
-    show_crosshair: bool,
-    inference_ms: float,
-    model_inference_ms: float,
-    detector_total_ms: float,
+    stream_stats: StreamStats,
+    telemetry: LiveTelemetrySnapshot,
     detection_count: int,
     detector_device: str,
     detector_precision: str,
+    show_crosshair: bool,
 ) -> None:
     if show_crosshair:
         draw_crosshair(image)
@@ -77,15 +75,48 @@ def draw_status(
     lines = (
         "MODE: VIDEO",
         f"FRAME: {frame_id}",
-        f"FPS: {fps:.1f}",
-        f"AGE: {frame_age_ms:.2f} ms",
+
+        (
+            f"CAP FPS: "
+            f"{stream_stats.captured_fps:.1f}"
+        ),
+
+        (
+            f"PIPE FPS: "
+            f"{telemetry.pipeline_fps:.1f}"
+        ),
+
+        (
+            f"AGE: "
+            f"{telemetry.frame_age_ms:.1f} ms "
+            f"P95 {telemetry.frame_age_p95_ms:.1f}"
+        ),
+
         f"RES: {width}x{height}",
         f"BACKEND: {backend}",
-        f"DROPPED: {dropped_frames}",
+
+        (
+            f"DROP: "
+            f"{stream_stats.dropped_frames} "
+            f"({stream_stats.drop_rate_pct:.2f}%)"
+        ),
+
         f"DETECTIONS: {detection_count}",
-        f"INFERENCE: {inference_ms:.2f} ms",
-        f"MODEL: {model_inference_ms:.2f} ms",
-        f"DET TOTAL: {detector_total_ms:.2f} ms",
+
+        (
+            f"MODEL: "
+            f"{telemetry.model_inference_ms:.1f} ms "
+            f"P95 "
+            f"{telemetry.model_inference_p95_ms:.1f}"
+        ),
+
+        (
+            f"DET TOTAL: "
+            f"{telemetry.detector_total_ms:.1f} ms "
+            f"P95 "
+            f"{telemetry.detector_total_p95_ms:.1f}"
+        ),
+
         f"DEVICE: {detector_device}",
         f"PRECISION: {detector_precision}",
     )

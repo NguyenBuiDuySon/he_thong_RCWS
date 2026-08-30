@@ -14,6 +14,7 @@ class CameraConfig:
     fps: int
     backend: str
 
+
 @dataclass(frozen=True, slots=True)
 class DetectorConfig:
     model: str
@@ -22,6 +23,13 @@ class DetectorConfig:
     imgsz: int
     confidence: float
     max_det: int
+    warmup_iterations: int
+
+
+@dataclass(frozen=True, slots=True)
+class TelemetryConfig:
+    rolling_window_frames: int
+
 
 @dataclass(frozen=True, slots=True)
 class DisplayConfig:
@@ -33,10 +41,12 @@ class DisplayConfig:
 class AppConfig:
     camera: CameraConfig
     detector: DetectorConfig
+    telemetry: TelemetryConfig
     display: DisplayConfig
 
-
-def load_config(path: str | Path) -> AppConfig:
+def load_config(
+    path: str | Path,
+) -> AppConfig:
     config_path = Path(path)
 
     with config_path.open(
@@ -46,8 +56,9 @@ def load_config(path: str | Path) -> AppConfig:
         raw = yaml.safe_load(file)
 
     camera = raw["camera"]
-    display = raw["display"]
     detector = raw["detector"]
+    telemetry = raw["telemetry"]
+    display = raw["display"]
 
     return AppConfig(
         camera=CameraConfig(
@@ -56,25 +67,67 @@ def load_config(path: str | Path) -> AppConfig:
             height=int(camera["height"]),
             fps=int(camera["fps"]),
             backend=str(
-                camera.get("backend", "auto")
+                camera.get(
+                    "backend",
+                    "auto",
+                )
             ).lower(),
         ),
+
         detector=DetectorConfig(
-            model=str(detector["model"]),
+            model=str(
+                detector["model"]
+            ),
             device=str(
-                detector.get("device", "auto")
+                detector.get(
+                    "device",
+                    "auto",
+                )
             ).lower(),
             precision=str(
-                detector.get("precision", "auto")
+                detector.get(
+                    "precision",
+                    "auto",
+                )
             ).lower(),
             imgsz=int(
-                detector.get("imgsz", 640)
+                detector.get(
+                    "imgsz",
+                    640,
+                )
             ),
             confidence=float(
-                detector.get("confidence", 0.25)
+                detector.get(
+                    "confidence",
+                    0.25,
+                )
             ),
             max_det=int(
-                detector.get("max_det", 100)
+                detector.get(
+                    "max_det",
+                    100,
+                )
+            ),
+            warmup_iterations=max(
+                0,
+                int(
+                    detector.get(
+                        "warmup_iterations",
+                        10,
+                    )
+                ),
+            ),
+        ),
+
+        telemetry=TelemetryConfig(
+            rolling_window_frames=max(
+                10,
+                int(
+                    telemetry.get(
+                        "rolling_window_frames",
+                        120,
+                    )
+                ),
             ),
         ),
 

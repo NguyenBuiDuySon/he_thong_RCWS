@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from statistics import fmean, median, quantiles
-
+from collections import deque
 
 @dataclass(
     frozen=True,
@@ -96,3 +96,56 @@ class MetricSeries:
             p95=percentile_cuts[94],
             p99=percentile_cuts[98],
         )
+
+class RollingMetric:
+    def __init__(
+        self,
+        window_size: int = 120,
+    ) -> None:
+        if window_size < 2:
+            raise ValueError(
+                "window_size must be >= 2"
+            )
+
+        self._values: deque[float] = deque(
+            maxlen=window_size
+        )
+
+    @property
+    def count(self) -> int:
+        return len(
+            self._values
+        )
+
+    def add(
+        self,
+        value: float,
+    ) -> None:
+        self._values.append(
+            float(value)
+        )
+
+    @property
+    def mean(self) -> float:
+        if not self._values:
+            return 0.0
+
+        return fmean(
+            self._values
+        )
+
+    @property
+    def p95(self) -> float:
+        if not self._values:
+            return 0.0
+
+        if len(self._values) == 1:
+            return self._values[0]
+
+        cuts = quantiles(
+            self._values,
+            n=100,
+            method="inclusive",
+        )
+
+        return cuts[94]
