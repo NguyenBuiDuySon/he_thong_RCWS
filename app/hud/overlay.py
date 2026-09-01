@@ -5,6 +5,7 @@ import numpy as np
 
 from app.capture.latest_frame import StreamStats
 from app.detection.types import DetectionBatch
+from app.targeting.types import TargetSnapshot
 from app.telemetry.live import LiveTelemetrySnapshot
 from app.tracking.types import TrackBatch
 
@@ -69,6 +70,7 @@ def draw_status(
     show_crosshair: bool,
     track_count: int,
     unconfirmed_count: int,
+    target: TargetSnapshot,
 ) -> None:
     if show_crosshair:
         draw_crosshair(image)
@@ -87,6 +89,13 @@ def draw_status(
         f"TRACKS: {track_count}",
         f"UNCONFIRMED: {unconfirmed_count}",
         f"DETECTIONS: {detection_count}",
+        (f"TARGET: {target.status.value.upper()}"),
+        (
+            f"TARGET ID: {target.selected_track_id}"
+            if target.selected_track_id is not None
+            else "TARGET ID: -"
+        ),
+        (f"TARGET MISS: {target.missing_frames}"),
         (
             f"MODEL: "
             f"{telemetry.model_inference_ms:.1f} ms "
@@ -168,10 +177,7 @@ def draw_detections(
         )
 
 
-def draw_tracks(
-    image: np.ndarray,
-    batch: TrackBatch,
-) -> None:
+def draw_tracks(image: np.ndarray, batch: TrackBatch, target: TargetSnapshot) -> None:
     for track in batch.tracks:
         x1 = int(track.x1)
         y1 = int(track.y1)
@@ -181,15 +187,33 @@ def draw_tracks(
         cx = int(track.center_x)
         cy = int(track.center_y)
 
+        is_selected = (
+            target.selected_track_id
+            == track.track_id
+        )
+
+        thickness = 3 if is_selected else 1
+
+        if is_selected:
+            label = (
+                f"LOCK | ID {track.track_id} | "
+                f"{track.class_name} "
+                f"{track.confidence:.2f}"
+            )
+        else:
+            label = (
+                f"ID {track.track_id} | "
+                f"{track.class_name} "
+                f"{track.confidence:.2f}"
+            )
+
         cv2.rectangle(
             image,
             (x1, y1),
             (x2, y2),
             GREEN,
-            2,
+            thickness,
         )
-
-        label = f"ID {track.track_id} | {track.class_name} {track.confidence:.2f}"
 
         cv2.putText(
             image,

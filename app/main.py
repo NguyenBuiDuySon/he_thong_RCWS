@@ -10,6 +10,14 @@ from app.hud.overlay import (
     draw_status,
     draw_tracks,
 )
+from app.targeting.manager import TargetManager
+from app.targeting.mouse import (
+    MouseActionType,
+    MouseTargetInput,
+)
+from app.targeting.selection import (
+    pick_track_at_point,
+)
 from app.telemetry.live import LiveTelemetry
 from app.tracking.bytetrack_tracker import (
     ByteTrackAdapter,
@@ -24,6 +32,8 @@ def main() -> None:
     detector = YoloDetector(config.detector)
 
     warmup_packet = camera.read()
+    target_manager = TargetManager()
+    mouse_input = MouseTargetInput()
 
     if warmup_packet is None:
         raise RuntimeError("Cannot read detector warm-up frame.")
@@ -72,6 +82,16 @@ def main() -> None:
 
     live_telemetry = LiveTelemetry(window_size=(config.telemetry.rolling_window_frames))
 
+    cv2.namedWindow(
+        config.display.window_name,
+        cv2.WINDOW_AUTOSIZE,
+    )
+
+    cv2.setMouseCallback(
+        config.display.window_name,
+        mouse_input.callback,
+    )
+
     stream.start()
 
     try:
@@ -89,6 +109,28 @@ def main() -> None:
                 batch,
             )
 
+            mouse_action = mouse_input.consume()
+
+            if mouse_action is not None:
+                if mouse_action.action is MouseActionType.CLEAR:
+                    target_manager.clear()
+
+                elif (
+                    mouse_action.action is MouseActionType.SELECT
+                    and mouse_action.x is not None
+                    and mouse_action.y is not None
+                ):
+                    selected = pick_track_at_point(
+                        track_batch,
+                        mouse_action.x,
+                        mouse_action.y,
+                    )
+
+                    if selected is not None:
+                        target_manager.select(selected.track_id)
+
+            target = target_manager.update(track_batch)
+
             frame_age_ms = (perf_counter_ns() - packet.received_at_ns) / 1_000_000
 
             telemetry = live_telemetry.update(
@@ -105,9 +147,12 @@ def main() -> None:
             #     batch,
             # )
 
+            target = target_manager.update(track_batch)
+
             draw_tracks(
                 packet.image,
                 track_batch,
+                target,
             )
 
             draw_status(
@@ -122,6 +167,7 @@ def main() -> None:
                 detector_device=(detector.device),
                 detector_precision=(detector.precision),
                 show_crosshair=(config.display.show_crosshair),
+                target=target,
             )
 
             cv2.imshow(
@@ -136,6 +182,11 @@ def main() -> None:
                 27,
             ):
                 break
+            if key in (
+                ord("c"),
+                ord("C"),
+            ):
+                target_manager.clear()
 
     finally:
         tracker.reset()
