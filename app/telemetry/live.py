@@ -21,6 +21,9 @@ class LiveTelemetrySnapshot:
     detector_total_ms: float
     detector_total_p95_ms: float
 
+    tracking_ms: float
+    tracking_p95_ms: float
+
     frame_age_ms: float
     frame_age_p95_ms: float
 
@@ -37,6 +40,8 @@ class LiveTelemetry:
                 window_size,
             )
         )
+
+        self._tracking = RollingMetric(window_size)
 
         self._model_inference = RollingMetric(window_size)
 
@@ -65,6 +70,7 @@ class LiveTelemetry:
         model_inference_ms: float,
         detector_total_ms: float,
         frame_age_ms: float,
+        tracking_ms: float,
     ) -> LiveTelemetrySnapshot:
 
         # pipeline_fps = (
@@ -81,6 +87,8 @@ class LiveTelemetry:
 
         self._frame_age.add(frame_age_ms)
 
+        self._tracking.add(tracking_ms)
+
         return LiveTelemetrySnapshot(
             pipeline_fps=pipeline_fps,
             model_inference_ms=(model_inference_ms),
@@ -89,4 +97,6 @@ class LiveTelemetry:
             detector_total_p95_ms=(self._detector_total.p95),
             frame_age_ms=(frame_age_ms),
             frame_age_p95_ms=(self._frame_age.p95),
+            tracking_ms=tracking_ms,
+            tracking_p95_ms=(self._tracking.p95),
         )

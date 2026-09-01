@@ -27,6 +27,17 @@ class DetectorConfig:
 
 
 @dataclass(frozen=True, slots=True)
+class TrackerConfig:
+    algorithm: str
+
+    lost_track_buffer: int
+    track_activation_threshold: float
+    minimum_consecutive_frames: int
+    minimum_iou_threshold: float
+    high_conf_det_threshold: float
+
+
+@dataclass(frozen=True, slots=True)
 class TelemetryConfig:
     rolling_window_frames: int
 
@@ -41,6 +52,7 @@ class DisplayConfig:
 class AppConfig:
     camera: CameraConfig
     detector: DetectorConfig
+    tracker: TrackerConfig
     telemetry: TelemetryConfig
     display: DisplayConfig
 
@@ -58,6 +70,7 @@ def load_config(
 
     camera = raw["camera"]
     detector = raw["detector"]
+    tracker = raw["tracker"]
     telemetry = raw["telemetry"]
     display = raw["display"]
 
@@ -114,6 +127,50 @@ def load_config(
                         10,
                     )
                 ),
+            ),
+        ),
+        tracker=TrackerConfig(
+            algorithm=str(
+                tracker.get(
+                    "algorithm",
+                    "bytetrack",
+                )
+            ).lower(),
+            lost_track_buffer=max(
+                0,
+                int(
+                    tracker.get(
+                        "lost_track_buffer",
+                        30,
+                    )
+                ),
+            ),
+            track_activation_threshold=float(
+                tracker.get(
+                    "track_activation_threshold",
+                    0.70,
+                )
+            ),
+            minimum_consecutive_frames=max(
+                1,
+                int(
+                    tracker.get(
+                        "minimum_consecutive_frames",
+                        2,
+                    )
+                ),
+            ),
+            minimum_iou_threshold=float(
+                tracker.get(
+                    "minimum_iou_threshold",
+                    0.10,
+                )
+            ),
+            high_conf_det_threshold=float(
+                tracker.get(
+                    "high_conf_det_threshold",
+                    0.60,
+                )
             ),
         ),
         telemetry=TelemetryConfig(

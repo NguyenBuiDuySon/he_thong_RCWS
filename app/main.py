@@ -7,10 +7,13 @@ from app.capture.latest_frame import LatestFrameStream
 from app.config import load_config
 from app.detection.yolo_detector import YoloDetector
 from app.hud.overlay import (
-    draw_detections,
     draw_status,
+    draw_tracks,
 )
 from app.telemetry.live import LiveTelemetry
+from app.tracking.bytetrack_tracker import (
+    ByteTrackAdapter,
+)
 
 
 def main() -> None:
@@ -37,6 +40,18 @@ def main() -> None:
     stream = LatestFrameStream(
         camera,
         rate_window_frames=(config.telemetry.rolling_window_frames),
+    )
+
+    tracker_frame_rate = (
+        camera.actual_fps if camera.actual_fps > 0 else float(config.camera.fps)
+    )
+
+    if config.tracker.algorithm != "bytetrack":
+        raise ValueError("Only 'bytetrack' is supported at this stage.")
+
+    tracker = ByteTrackAdapter(
+        config.tracker,
+        frame_rate=tracker_frame_rate,
     )
 
     print("\nCamera ready")
@@ -69,19 +84,30 @@ def main() -> None:
 
             batch = detector.detect(packet)
 
+            track_batch = tracker.update(
+                packet,
+                batch,
+            )
+
             frame_age_ms = (perf_counter_ns() - packet.received_at_ns) / 1_000_000
 
             telemetry = live_telemetry.update(
                 model_inference_ms=(batch.inference_ms),
                 detector_total_ms=(batch.total_ms),
+                tracking_ms=(track_batch.tracking_ms),
                 frame_age_ms=(frame_age_ms),
             )
 
             stream_stats = stream.stats
 
-            draw_detections(
+            # draw_detections(
+            #     packet.image,
+            #     batch,
+            # )
+
+            draw_tracks(
                 packet.image,
-                batch,
+                track_batch,
             )
 
             draw_status(
@@ -91,6 +117,8 @@ def main() -> None:
                 stream_stats=stream_stats,
                 telemetry=telemetry,
                 detection_count=len(batch.detections),
+                track_count=len(track_batch.tracks),
+                unconfirmed_count=(track_batch.unconfirmed_count),
                 detector_device=(detector.device),
                 detector_precision=(detector.precision),
                 show_crosshair=(config.display.show_crosshair),
@@ -110,6 +138,7 @@ def main() -> None:
                 break
 
     finally:
+        tracker.reset()
         stream.stop()
         camera.close()
         cv2.destroyAllWindows()

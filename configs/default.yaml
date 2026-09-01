@@ -5,6 +5,14 @@ camera:
   fps: 30
   backend: dshow
 
+tracker:
+  algorithm: bytetrack
+  lost_track_buffer: 30
+  track_activation_threshold: 0.70
+  minimum_consecutive_frames: 2
+  minimum_iou_threshold: 0.10
+  high_conf_det_threshold: 0.60
+
 detector:
   model: yolo26n.pt
   device: auto
