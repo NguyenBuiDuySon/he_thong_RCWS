@@ -147,8 +147,6 @@ def main() -> None:
             #     batch,
             # )
 
-            target = target_manager.update(track_batch)
-
             draw_tracks(
                 packet.image,
                 track_batch,

@@ -40,12 +40,7 @@ class LatestFrameStream:
                 rate_window_frames,
             )
         )
-
     @property
-    # def dropped_frames(self) -> int:
-    #     with self._stats_lock:
-    #         return self._dropped_frames
-
     def stats(self) -> StreamStats:
         with self._stats_lock:
             captured_frames = self._captured_frames
