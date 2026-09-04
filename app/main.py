@@ -5,6 +5,7 @@ import cv2
 from app.capture.camera import Camera
 from app.capture.latest_frame import LatestFrameStream
 from app.config import load_config
+from app.control.slew_rate_limiter import CommandSlewRateLimiter
 from app.control.tracking_controller import TrackingController
 from app.detection.yolo_detector import YoloDetector
 from app.hud.overlay import (
@@ -44,6 +45,11 @@ def main() -> None:
     tracking_controller = TrackingController(
         kp_pan=1.0,
         kp_tilt=1.0,
+    )
+
+    command_limiter = CommandSlewRateLimiter(
+        pan_rate_per_s=2.0,
+        tilt_rate_per_s=2.0,
     )
 
     mouse_input = MouseTargetInput()
@@ -168,10 +174,15 @@ def main() -> None:
             else:
                 error_filter.reset()
 
-            command = tracking_controller.update(
+            raw_command = tracking_controller.update(
                 error_x=(filtered_error.x if filtered_error is not None else None),
                 error_y=(filtered_error.y if filtered_error is not None else None),
                 active=filtered_error is not None,
+            )
+
+            command = command_limiter.update(
+                raw_command,
+                timestamp_ns=packet.received_at_ns,
             )
 
             if filtered_error is not None:
@@ -188,6 +199,27 @@ def main() -> None:
                     1,
                     cv2.LINE_AA,
                 )
+
+            raw_command_state = "ON" if raw_command.active else "OFF"
+
+            cv2.putText(
+                packet.image,
+                (
+                    f"RAW "
+                    f"P:{raw_command.pan_norm:+.3f} "
+                    f"T:{raw_command.tilt_norm:+.3f} "
+                    f"{raw_command_state}"
+                ),
+                (
+                    16,
+                    packet.image.shape[0] - 114,
+                ),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.50,
+                (0, 255, 0),
+                1,
+                cv2.LINE_AA,
+            )
 
             command_state = "ON" if command.active else "OFF"
 
