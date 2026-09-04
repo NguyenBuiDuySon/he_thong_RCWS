@@ -40,6 +40,8 @@ class TrackerConfig:
 @dataclass(frozen=True, slots=True)
 class TargetingConfig:
     lost_timeout_frames: int
+    dead_zone_x_norm: float
+    dead_zone_y_norm: float
 
 
 @dataclass(frozen=True, slots=True)
@@ -200,6 +202,18 @@ def load_config(
                         90,
                     )
                 ),
+            ),
+            dead_zone_x_norm=float(
+                targeting.get(
+                    "dead_zone_x_norm",
+                    0.05,
+                )
+            ),
+            dead_zone_y_norm=float(
+                targeting.get(
+                    "dead_zone_y_norm",
+                    0.05,
+                )
             ),
         ),
         display=DisplayConfig(

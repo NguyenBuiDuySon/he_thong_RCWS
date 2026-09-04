@@ -15,6 +15,7 @@ from app.targeting.mouse import (
     MouseActionType,
     MouseTargetInput,
 )
+from app.targeting.observation import build_target_observation
 from app.targeting.selection import (
     pick_track_at_point,
 )
@@ -133,6 +134,16 @@ def main() -> None:
 
             target = target_manager.update(track_batch)
 
+            frame_height, frame_width = packet.image.shape[:2]
+
+            observation = build_target_observation(
+                target,
+                frame_width=frame_width,
+                frame_height=frame_height,
+                dead_zone_x_norm=(config.targeting.dead_zone_x_norm),
+                dead_zone_y_norm=(config.targeting.dead_zone_y_norm),
+            )
+
             frame_age_ms = (perf_counter_ns() - packet.received_at_ns) / 1_000_000
 
             telemetry = live_telemetry.update(
@@ -169,6 +180,46 @@ def main() -> None:
                 show_crosshair=(config.display.show_crosshair),
                 target=target,
             )
+
+            if observation is not None:
+                state = "IN" if observation.inside_dead_zone else "OUT"
+
+                cv2.putText(
+                    packet.image,
+                    (
+                        f"ERR N "
+                        f"X:{observation.error_x_norm:+.3f} "
+                        f"Y:{observation.error_y_norm:+.3f}"
+                    ),
+                    (
+                        16,
+                        packet.image.shape[0] - 42,
+                    ),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.50,
+                    (0, 255, 0),
+                    1,
+                    cv2.LINE_AA,
+                )
+
+                cv2.putText(
+                    packet.image,
+                    (
+                        f"CTRL "
+                        f"X:{observation.control_error_x_norm:+.3f} "
+                        f"Y:{observation.control_error_y_norm:+.3f} "
+                        f"DZ:{state}"
+                    ),
+                    (
+                        16,
+                        packet.image.shape[0] - 18,
+                    ),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.50,
+                    (0, 255, 0),
+                    1,
+                    cv2.LINE_AA,
+                )
 
             cv2.imshow(
                 config.display.window_name,
