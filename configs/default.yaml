@@ -18,6 +18,7 @@ targeting:
   lost_timeout_frames: 90
   dead_zone_x_norm: 0.05
   dead_zone_y_norm: 0.05
+  control_filter_tau_ms: 70.0
 
 detector:
   model: yolo26n.pt

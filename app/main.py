@@ -10,6 +10,7 @@ from app.hud.overlay import (
     draw_status,
     draw_tracks,
 )
+from app.targeting.filter import TrackingErrorFilter
 from app.targeting.manager import TargetManager
 from app.targeting.mouse import (
     MouseActionType,
@@ -36,6 +37,9 @@ def main() -> None:
     target_manager = TargetManager(
         lost_timeout_frames=(config.targeting.lost_timeout_frames)
     )
+
+    error_filter = TrackingErrorFilter(tau_ms=(config.targeting.control_filter_tau_ms))
+
     mouse_input = MouseTargetInput()
 
     if warmup_packet is None:
@@ -130,7 +134,10 @@ def main() -> None:
                     )
 
                     if selected is not None:
-                        target_manager.select(selected.track_id)
+                        target_manager.select(
+                            selected.track_id,
+                            selected.class_id,
+                        )
 
             target = target_manager.update(track_batch)
 
@@ -143,6 +150,32 @@ def main() -> None:
                 dead_zone_x_norm=(config.targeting.dead_zone_x_norm),
                 dead_zone_y_norm=(config.targeting.dead_zone_y_norm),
             )
+
+            filtered_error = None
+            if observation is not None and target.track is not None:
+                filtered_error = error_filter.update(
+                    target_id=target.track.track_id,
+                    x=(observation.control_error_x_norm),
+                    y=(observation.control_error_y_norm),
+                    timestamp_ns=(packet.received_at_ns),
+                )
+            else:
+                error_filter.reset()
+
+            if filtered_error is not None:
+                cv2.putText(
+                    packet.image,
+                    (f"FILT X:{filtered_error.x:+.3f} Y:{filtered_error.y:+.3f}"),
+                    (
+                        16,
+                        packet.image.shape[0] - 18,
+                    ),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.50,
+                    (0, 255, 0),
+                    1,
+                    cv2.LINE_AA,
+                )
 
             frame_age_ms = (perf_counter_ns() - packet.received_at_ns) / 1_000_000
 
@@ -193,7 +226,7 @@ def main() -> None:
                     ),
                     (
                         16,
-                        packet.image.shape[0] - 42,
+                        packet.image.shape[0] - 66,
                     ),
                     cv2.FONT_HERSHEY_SIMPLEX,
                     0.50,
@@ -212,7 +245,7 @@ def main() -> None:
                     ),
                     (
                         16,
-                        packet.image.shape[0] - 18,
+                        packet.image.shape[0] - 42,
                     ),
                     cv2.FONT_HERSHEY_SIMPLEX,
                     0.50,

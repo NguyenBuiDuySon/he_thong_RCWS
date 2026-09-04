@@ -42,6 +42,7 @@ class TargetingConfig:
     lost_timeout_frames: int
     dead_zone_x_norm: float
     dead_zone_y_norm: float
+    control_filter_tau_ms: float
 
 
 @dataclass(frozen=True, slots=True)
@@ -214,6 +215,15 @@ def load_config(
                     "dead_zone_y_norm",
                     0.05,
                 )
+            ),
+            control_filter_tau_ms=max(
+                0.0,
+                float(
+                    targeting.get(
+                        "control_filter_tau_ms",
+                        70.0,
+                    )
+                ),
             ),
         ),
         display=DisplayConfig(

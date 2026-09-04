@@ -54,7 +54,7 @@ def test_starts_idle() -> None:
 def test_locks_selected_track() -> None:
     manager = TargetManager()
 
-    manager.select(9)
+    manager.select(9, 0)
 
     snapshot = manager.update(
         make_batch(
@@ -80,7 +80,7 @@ def test_locks_selected_track() -> None:
 def test_does_not_switch_target() -> None:
     manager = TargetManager()
 
-    manager.select(9)
+    manager.select(9, 0)
 
     snapshot = manager.update(
         make_batch(
@@ -104,7 +104,7 @@ def test_recovers_same_track_id() -> None:
         lost_timeout_frames=3,
     )
 
-    manager.select(9)
+    manager.select(9, 0)
 
     manager.update(
         make_batch(
@@ -137,7 +137,7 @@ def test_recovers_same_track_id() -> None:
 def test_clear_returns_to_idle() -> None:
     manager = TargetManager()
 
-    manager.select(9)
+    manager.select(9, 0)
     manager.clear()
 
     snapshot = manager.update(
@@ -154,7 +154,10 @@ def test_rejects_negative_track_id() -> None:
     manager = TargetManager()
 
     try:
-        manager.select(-1)
+        manager.select(
+            -1,
+            0,
+        )
     except ValueError:
         return
 
@@ -166,7 +169,7 @@ def test_lost_target_times_out_to_idle() -> None:
         lost_timeout_frames=3,
     )
 
-    manager.select(9)
+    manager.select(9, 0)
 
     first_missing = manager.update(make_batch(1))
 
@@ -193,7 +196,7 @@ def test_does_not_relock_after_timeout() -> None:
         lost_timeout_frames=2,
     )
 
-    manager.select(9)
+    manager.select(9, 0)
 
     manager.update(make_batch(1))
 
@@ -213,3 +216,105 @@ def test_does_not_relock_after_timeout() -> None:
 
     assert returned.status is TargetStatus.IDLE
     assert returned.selected_track_id is None
+
+
+def test_same_track_id_different_class_is_lost() -> None:
+    manager = TargetManager(
+        lost_timeout_frames=3,
+    )
+
+    manager.select(9, 0)
+
+    locked = manager.update(
+        make_batch(
+            1,
+            make_track(
+                9,
+                "person",
+            ),
+        )
+    )
+
+    changed_class = Track(
+        track_id=9,
+        class_id=1,
+        class_name="bicycle",
+        confidence=0.9,
+        x1=10.0,
+        y1=20.0,
+        x2=110.0,
+        y2=220.0,
+    )
+
+    lost = manager.update(
+        make_batch(
+            2,
+            changed_class,
+        )
+    )
+
+    assert locked.status is TargetStatus.LOCKED
+
+    assert lost.status is TargetStatus.LOST
+    assert lost.selected_track_id == 9
+    assert lost.track is None
+    assert lost.missing_frames == 1
+
+
+def test_recovers_only_same_track_and_class() -> None:
+    manager = TargetManager(
+        lost_timeout_frames=4,
+    )
+
+    manager.select(
+        9,
+        0,
+    )
+
+    wrong_class = Track(
+        track_id=9,
+        class_id=1,
+        class_name="bicycle",
+        confidence=0.9,
+        x1=10.0,
+        y1=20.0,
+        x2=110.0,
+        y2=220.0,
+    )
+
+    lost = manager.update(
+        make_batch(
+            1,
+            wrong_class,
+        )
+    )
+
+    recovered = manager.update(
+        make_batch(
+            2,
+            make_track(
+                9,
+                "person",
+            ),
+        )
+    )
+
+    assert lost.status is TargetStatus.LOST
+    assert recovered.status is TargetStatus.LOCKED
+    assert recovered.track is not None
+    assert recovered.track.class_id == 0
+    assert recovered.missing_frames == 0
+
+
+def test_rejects_negative_class_id() -> None:
+    manager = TargetManager()
+
+    try:
+        manager.select(
+            9,
+            -1,
+        )
+    except ValueError:
+        return
+
+    raise AssertionError("Expected ValueError")
