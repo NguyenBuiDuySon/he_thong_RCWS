@@ -187,10 +187,7 @@ def draw_tracks(image: np.ndarray, batch: TrackBatch, target: TargetSnapshot) ->
         cx = int(track.center_x)
         cy = int(track.center_y)
 
-        is_selected = (
-            target.selected_track_id
-            == track.track_id
-        )
+        is_selected = target.selected_track_id == track.track_id
 
         thickness = 3 if is_selected else 1
 
@@ -201,11 +198,7 @@ def draw_tracks(image: np.ndarray, batch: TrackBatch, target: TargetSnapshot) ->
                 f"{track.confidence:.2f}"
             )
         else:
-            label = (
-                f"ID {track.track_id} | "
-                f"{track.class_name} "
-                f"{track.confidence:.2f}"
-            )
+            label = f"ID {track.track_id} | {track.class_name} {track.confidence:.2f}"
 
         cv2.rectangle(
             image,

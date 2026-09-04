@@ -100,7 +100,9 @@ def test_does_not_switch_target() -> None:
 
 
 def test_recovers_same_track_id() -> None:
-    manager = TargetManager()
+    manager = TargetManager(
+        lost_timeout_frames=3,
+    )
 
     manager.select(9)
 
@@ -157,3 +159,57 @@ def test_rejects_negative_track_id() -> None:
         return
 
     raise AssertionError("Expected ValueError")
+
+
+def test_lost_target_times_out_to_idle() -> None:
+    manager = TargetManager(
+        lost_timeout_frames=3,
+    )
+
+    manager.select(9)
+
+    first_missing = manager.update(make_batch(1))
+
+    second_missing = manager.update(make_batch(2))
+
+    timed_out = manager.update(make_batch(3))
+
+    assert first_missing.status is TargetStatus.LOST
+    assert first_missing.missing_frames == 1
+
+    assert second_missing.status is TargetStatus.LOST
+    assert second_missing.missing_frames == 2
+
+    assert timed_out.status is TargetStatus.IDLE
+    assert timed_out.selected_track_id is None
+    assert timed_out.track is None
+    assert timed_out.missing_frames == 0
+
+    assert manager.selected_track_id is None
+
+
+def test_does_not_relock_after_timeout() -> None:
+    manager = TargetManager(
+        lost_timeout_frames=2,
+    )
+
+    manager.select(9)
+
+    manager.update(make_batch(1))
+
+    timed_out = manager.update(make_batch(2))
+
+    returned = manager.update(
+        make_batch(
+            3,
+            make_track(
+                9,
+                "person",
+            ),
+        )
+    )
+
+    assert timed_out.status is TargetStatus.IDLE
+
+    assert returned.status is TargetStatus.IDLE
+    assert returned.selected_track_id is None

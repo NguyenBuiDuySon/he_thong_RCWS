@@ -32,7 +32,9 @@ def main() -> None:
     detector = YoloDetector(config.detector)
 
     warmup_packet = camera.read()
-    target_manager = TargetManager()
+    target_manager = TargetManager(
+        lost_timeout_frames=(config.targeting.lost_timeout_frames)
+    )
     mouse_input = MouseTargetInput()
 
     if warmup_packet is None:

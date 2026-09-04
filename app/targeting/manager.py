@@ -11,7 +11,15 @@ from app.tracking.types import (
 
 
 class TargetManager:
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        *,
+        lost_timeout_frames: int = 90,
+    ) -> None:
+        if lost_timeout_frames < 1:
+            raise ValueError("lost_timeout_frames must be >= 1")
+
+        self._lost_timeout_frames = lost_timeout_frames
         self._selected_track_id: int | None = None
         self._missing_frames = 0
 
@@ -65,10 +73,21 @@ class TargetManager:
 
         self._missing_frames += 1
 
+        if self._missing_frames >= self._lost_timeout_frames:
+            self.clear()
+
+            return TargetSnapshot(
+                frame_id=batch.frame_id,
+                status=TargetStatus.IDLE,
+                selected_track_id=None,
+                track=None,
+                missing_frames=0,
+            )
+
         return TargetSnapshot(
             frame_id=batch.frame_id,
             status=TargetStatus.LOST,
-            selected_track_id=(self._selected_track_id),
+            selected_track_id=self._selected_track_id,
             track=None,
             missing_frames=self._missing_frames,
         )

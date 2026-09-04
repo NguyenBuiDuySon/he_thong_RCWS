@@ -40,6 +40,7 @@ class LatestFrameStream:
                 rate_window_frames,
             )
         )
+
     @property
     def stats(self) -> StreamStats:
         with self._stats_lock:

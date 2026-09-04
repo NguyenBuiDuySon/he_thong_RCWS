@@ -38,6 +38,11 @@ class TrackerConfig:
 
 
 @dataclass(frozen=True, slots=True)
+class TargetingConfig:
+    lost_timeout_frames: int
+
+
+@dataclass(frozen=True, slots=True)
 class TelemetryConfig:
     rolling_window_frames: int
 
@@ -53,6 +58,7 @@ class AppConfig:
     camera: CameraConfig
     detector: DetectorConfig
     tracker: TrackerConfig
+    targeting: TargetingConfig
     telemetry: TelemetryConfig
     display: DisplayConfig
 
@@ -71,6 +77,7 @@ def load_config(
     camera = raw["camera"]
     detector = raw["detector"]
     tracker = raw["tracker"]
+    targeting = raw.get("targeting", {})
     telemetry = raw["telemetry"]
     display = raw["display"]
 
@@ -180,6 +187,17 @@ def load_config(
                     telemetry.get(
                         "rolling_window_frames",
                         120,
+                    )
+                ),
+            ),
+        ),
+        targeting=TargetingConfig(
+            lost_timeout_frames=max(
+                1,
+                int(
+                    targeting.get(
+                        "lost_timeout_frames",
+                        90,
                     )
                 ),
             ),

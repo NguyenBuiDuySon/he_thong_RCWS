@@ -13,6 +13,10 @@ tracker:
   minimum_iou_threshold: 0.10
   high_conf_det_threshold: 0.60
 
+
+targeting:
+  lost_timeout_frames: 90
+
 detector:
   model: yolo26n.pt
   device: auto
