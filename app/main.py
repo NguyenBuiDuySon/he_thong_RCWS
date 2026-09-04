@@ -5,6 +5,7 @@ import cv2
 from app.capture.camera import Camera
 from app.capture.latest_frame import LatestFrameStream
 from app.config import load_config
+from app.control.tracking_controller import TrackingController
 from app.detection.yolo_detector import YoloDetector
 from app.hud.overlay import (
     draw_status,
@@ -39,6 +40,11 @@ def main() -> None:
     )
 
     error_filter = TrackingErrorFilter(tau_ms=(config.targeting.control_filter_tau_ms))
+
+    tracking_controller = TrackingController(
+        kp_pan=1.0,
+        kp_tilt=1.0,
+    )
 
     mouse_input = MouseTargetInput()
 
@@ -162,6 +168,12 @@ def main() -> None:
             else:
                 error_filter.reset()
 
+            command = tracking_controller.update(
+                error_x=(filtered_error.x if filtered_error is not None else None),
+                error_y=(filtered_error.y if filtered_error is not None else None),
+                active=filtered_error is not None,
+            )
+
             if filtered_error is not None:
                 cv2.putText(
                     packet.image,
@@ -176,6 +188,27 @@ def main() -> None:
                     1,
                     cv2.LINE_AA,
                 )
+
+            command_state = "ON" if command.active else "OFF"
+
+            cv2.putText(
+                packet.image,
+                (
+                    f"CMD "
+                    f"P:{command.pan_norm:+.3f} "
+                    f"T:{command.tilt_norm:+.3f} "
+                    f"{command_state}"
+                ),
+                (
+                    16,
+                    packet.image.shape[0] - 90,
+                ),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.50,
+                (0, 255, 0),
+                1,
+                cv2.LINE_AA,
+            )
 
             frame_age_ms = (perf_counter_ns() - packet.received_at_ns) / 1_000_000
 
