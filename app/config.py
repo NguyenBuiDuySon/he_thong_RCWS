@@ -46,6 +46,16 @@ class TargetingConfig:
 
 
 @dataclass(frozen=True, slots=True)
+class ControlConfig:
+    kp_pan: float
+    kp_tilt: float
+    max_pan_command: float
+    max_tilt_command: float
+    pan_rate_per_s: float
+    tilt_rate_per_s: float
+
+
+@dataclass(frozen=True, slots=True)
 class TelemetryConfig:
     rolling_window_frames: int
 
@@ -62,6 +72,7 @@ class AppConfig:
     detector: DetectorConfig
     tracker: TrackerConfig
     targeting: TargetingConfig
+    control: ControlConfig
     telemetry: TelemetryConfig
     display: DisplayConfig
 
@@ -81,6 +92,7 @@ def load_config(
     detector = raw["detector"]
     tracker = raw["tracker"]
     targeting = raw.get("targeting", {})
+    control = raw.get("control", {})
     telemetry = raw["telemetry"]
     display = raw["display"]
 
@@ -224,6 +236,44 @@ def load_config(
                         70.0,
                     )
                 ),
+            ),
+        ),
+        control=ControlConfig(
+            kp_pan=float(
+                control.get(
+                    "kp_pan",
+                    1.0,
+                )
+            ),
+            kp_tilt=float(
+                control.get(
+                    "kp_tilt",
+                    1.0,
+                )
+            ),
+            max_pan_command=float(
+                control.get(
+                    "max_pan_command",
+                    1.0,
+                )
+            ),
+            max_tilt_command=float(
+                control.get(
+                    "max_tilt_command",
+                    1.0,
+                )
+            ),
+            pan_rate_per_s=float(
+                control.get(
+                    "pan_rate_per_s",
+                    2.0,
+                )
+            ),
+            tilt_rate_per_s=float(
+                control.get(
+                    "tilt_rate_per_s",
+                    2.0,
+                )
             ),
         ),
         display=DisplayConfig(

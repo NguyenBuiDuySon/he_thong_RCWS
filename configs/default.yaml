@@ -20,6 +20,16 @@ targeting:
   dead_zone_y_norm: 0.05
   control_filter_tau_ms: 70.0
 
+control:
+  kp_pan: 1.0
+  kp_tilt: 1.0
+
+  max_pan_command: 1.0
+  max_tilt_command: 1.0
+
+  pan_rate_per_s: 2.0
+  tilt_rate_per_s: 2.0
+
 detector:
   model: yolo26n.pt
   device: auto

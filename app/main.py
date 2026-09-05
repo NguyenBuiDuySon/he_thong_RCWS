@@ -12,6 +12,7 @@ from app.hud.overlay import (
     draw_status,
     draw_tracks,
 )
+from app.output import NullCommandOutput
 from app.targeting.filter import TrackingErrorFilter
 from app.targeting.manager import TargetManager
 from app.targeting.mouse import (
@@ -43,15 +44,18 @@ def main() -> None:
     error_filter = TrackingErrorFilter(tau_ms=(config.targeting.control_filter_tau_ms))
 
     tracking_controller = TrackingController(
-        kp_pan=1.0,
-        kp_tilt=1.0,
+        kp_pan=config.control.kp_pan,
+        kp_tilt=config.control.kp_tilt,
+        max_pan_command=config.control.max_pan_command,
+        max_tilt_command=config.control.max_tilt_command,
     )
 
     command_limiter = CommandSlewRateLimiter(
-        pan_rate_per_s=2.0,
-        tilt_rate_per_s=2.0,
+        pan_rate_per_s=config.control.pan_rate_per_s,
+        tilt_rate_per_s=config.control.tilt_rate_per_s,
     )
 
+    command_output = NullCommandOutput()
     mouse_input = MouseTargetInput()
 
     if warmup_packet is None:
@@ -98,6 +102,16 @@ def main() -> None:
     print(f"Device   : {detector.device}")
 
     print(f"Precision: {detector.precision}")
+
+    print(
+        "Control  : "
+        f"Kp=({config.control.kp_pan:.2f}, "
+        f"{config.control.kp_tilt:.2f}) "
+        f"Limit=({config.control.max_pan_command:.2f}, "
+        f"{config.control.max_tilt_command:.2f}) "
+        f"Slew=({config.control.pan_rate_per_s:.2f}, "
+        f"{config.control.tilt_rate_per_s:.2f})/s"
+    )
 
     live_telemetry = LiveTelemetry(window_size=(config.telemetry.rolling_window_frames))
 
@@ -185,6 +199,8 @@ def main() -> None:
                 timestamp_ns=packet.received_at_ns,
             )
 
+            command_output.send(command)
+
             if filtered_error is not None:
                 cv2.putText(
                     packet.image,
@@ -252,11 +268,6 @@ def main() -> None:
             )
 
             stream_stats = stream.stats
-
-            # draw_detections(
-            #     packet.image,
-            #     batch,
-            # )
 
             draw_tracks(
                 packet.image,
@@ -341,6 +352,7 @@ def main() -> None:
         tracker.reset()
         stream.stop()
         camera.close()
+        command_output.close()
         cv2.destroyAllWindows()
 
 
