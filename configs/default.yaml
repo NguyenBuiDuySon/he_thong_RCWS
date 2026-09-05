@@ -30,6 +30,8 @@ control:
   pan_rate_per_s: 2.0
   tilt_rate_per_s: 2.0
 
+  watchdog_timeout_s: 0.25
+
 detector:
   model: yolo26n.pt
   device: auto

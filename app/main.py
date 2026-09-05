@@ -7,6 +7,7 @@ from app.capture.latest_frame import LatestFrameStream
 from app.config import load_config
 from app.control.slew_rate_limiter import CommandSlewRateLimiter
 from app.control.tracking_controller import TrackingController
+from app.control.watchdog import CommandWatchdog
 from app.detection.yolo_detector import YoloDetector
 from app.hud.overlay import (
     draw_status,
@@ -55,9 +56,12 @@ def main() -> None:
         tilt_rate_per_s=config.control.tilt_rate_per_s,
     )
 
-    command_output = NullCommandOutput()
     mouse_input = MouseTargetInput()
-
+    raw_output = NullCommandOutput()
+    output = CommandWatchdog(
+        raw_output,
+        timeout_s=config.control.watchdog_timeout_s,
+    )
     if warmup_packet is None:
         raise RuntimeError("Cannot read detector warm-up frame.")
 
@@ -199,7 +203,7 @@ def main() -> None:
                 timestamp_ns=packet.received_at_ns,
             )
 
-            command_output.send(command)
+            output.send(command)
 
             if filtered_error is not None:
                 cv2.putText(
@@ -349,10 +353,9 @@ def main() -> None:
                 target_manager.clear()
 
     finally:
-        tracker.reset()
+        output.close()
         stream.stop()
         camera.close()
-        command_output.close()
         cv2.destroyAllWindows()
 
 

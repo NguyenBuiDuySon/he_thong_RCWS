@@ -53,6 +53,7 @@ class ControlConfig:
     max_tilt_command: float
     pan_rate_per_s: float
     tilt_rate_per_s: float
+    watchdog_timeout_s: float
 
 
 @dataclass(frozen=True, slots=True)
