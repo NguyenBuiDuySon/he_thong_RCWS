@@ -13,7 +13,9 @@ from app.hud.overlay import (
     draw_status,
     draw_tracks,
 )
-from app.output import NullCommandOutput
+
+# from app.output import NullCommandOutput
+from app.output.factory import build_command_output
 from app.targeting.filter import TrackingErrorFilter
 from app.targeting.manager import TargetManager
 from app.targeting.mouse import (
@@ -57,7 +59,7 @@ def main() -> None:
     )
 
     mouse_input = MouseTargetInput()
-    raw_output = NullCommandOutput()
+    raw_output = build_command_output(config.output)
     output = CommandWatchdog(
         raw_output,
         timeout_s=config.control.watchdog_timeout_s,
@@ -116,6 +118,13 @@ def main() -> None:
         f"Slew=({config.control.pan_rate_per_s:.2f}, "
         f"{config.control.tilt_rate_per_s:.2f})/s"
     )
+
+    print(f"Output   : {config.output.mode.upper()}")
+
+    if config.output.mode == "serial":
+        print(
+            f"Serial   : {config.output.serial.port} @ {config.output.serial.baudrate}"
+        )
 
     live_telemetry = LiveTelemetry(window_size=(config.telemetry.rolling_window_frames))
 

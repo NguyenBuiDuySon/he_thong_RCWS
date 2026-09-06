@@ -32,6 +32,14 @@ control:
 
   watchdog_timeout_s: 0.25
 
+output:
+  mode: "null"
+
+  serial:
+    port: "COM3"
+    baudrate: 115200
+    write_timeout_s: 0.10
+
 detector:
   model: yolo26n.pt
   device: auto

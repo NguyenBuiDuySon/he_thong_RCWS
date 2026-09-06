@@ -57,6 +57,19 @@ class ControlConfig:
 
 
 @dataclass(frozen=True, slots=True)
+class SerialOutputConfig:
+    port: str
+    baudrate: int
+    write_timeout_s: float
+
+
+@dataclass(frozen=True, slots=True)
+class OutputConfig:
+    mode: str
+    serial: SerialOutputConfig
+
+
+@dataclass(frozen=True, slots=True)
 class TelemetryConfig:
     rolling_window_frames: int
 
@@ -76,6 +89,7 @@ class AppConfig:
     control: ControlConfig
     telemetry: TelemetryConfig
     display: DisplayConfig
+    output: OutputConfig
 
 
 def load_config(
@@ -94,8 +108,20 @@ def load_config(
     tracker = raw["tracker"]
     targeting = raw.get("targeting", {})
     control = raw.get("control", {})
+    output = raw.get("output", {})
+    serial_output = output.get("serial", {})
     telemetry = raw["telemetry"]
     display = raw["display"]
+
+    output_mode = str(
+        output.get(
+            "mode",
+            "null",
+        )
+    ).lower()
+
+    if output_mode not in {"null", "serial"}:
+        raise ValueError("output.mode must be 'null' or 'serial'")
 
     return AppConfig(
         camera=CameraConfig(
@@ -281,6 +307,29 @@ def load_config(
                     "watchdog_timeout_s",
                     0.25,
                 )
+            ),
+        ),
+        output=OutputConfig(
+            mode=output_mode,
+            serial=SerialOutputConfig(
+                port=str(
+                    serial_output.get(
+                        "port",
+                        "",
+                    )
+                ),
+                baudrate=int(
+                    serial_output.get(
+                        "baudrate",
+                        115200,
+                    )
+                ),
+                write_timeout_s=float(
+                    serial_output.get(
+                        "write_timeout_s",
+                        0.10,
+                    )
+                ),
             ),
         ),
         display=DisplayConfig(
