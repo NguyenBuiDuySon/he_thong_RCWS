@@ -20,3 +20,9 @@ data/recordings/*
 
 # Temporary files
 *.log
+
+# ESP-IDF generated files
+/firmware/esp32_rcws_receiver/build/
+/firmware/esp32_rcws_receiver/sdkconfig
+/firmware/esp32_rcws_receiver/sdkconfig.old
+/firmware/esp32_rcws_receiver/.clangd
