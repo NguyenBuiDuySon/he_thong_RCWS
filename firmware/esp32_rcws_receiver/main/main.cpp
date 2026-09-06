@@ -1,12 +1,16 @@
+#include <cstdint>
 #include <errno.h>
 #include <stdio.h>
 #include <unistd.h>
 
 #include "esp_log.h"
+#include "esp_timer.h"
+
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 
 #include "protocol.hpp"
+#include "receiver_guard.hpp"
 
 namespace {
 
@@ -20,9 +24,14 @@ constexpr uint32_t RECEIVER_TASK_STACK_SIZE = 4096;
 
 constexpr TickType_t RX_IDLE_DELAY_TICKS = 1;
 
+constexpr std::int64_t COMMAND_TIMEOUT_US = 250'000;
+
 const char *TAG = "rcws_rx";
 
-void process_line(char *line)
+void process_line(
+    char *line,
+    rcws::ReceiverGuard &receiver_guard
+)
 {
     rcws::WireCommand command{};
     rcws::ParseError error = rcws::ParseError::None;
@@ -41,6 +50,25 @@ void process_line(char *line)
         return;
     }
 
+    const std::int64_t now_us = esp_timer_get_time();
+
+    const rcws::GuardDecision decision =
+        receiver_guard.accept(
+            command.sequence,
+            command.active,
+            now_us
+        );
+
+    if (decision != rcws::GuardDecision::accepted) {
+        ESP_LOGW(
+            TAG,
+            "RX rejected: replay_or_stale seq=%u",
+            static_cast<unsigned>(command.sequence)
+        );
+
+        return;
+    }
+
     ESP_LOGI(
         TAG,
         "RX_OK seq=%u active=%d pan=%d tilt=%d",
@@ -50,6 +78,38 @@ void process_line(char *line)
         static_cast<int>(command.tilt_milli)
     );
 }
+
+void update_failsafe_state(
+    rcws::ReceiverGuard &receiver_guard,
+    bool &failsafe_stop
+)
+{
+    const bool should_stop =
+        receiver_guard.should_stop(
+            esp_timer_get_time()
+        );
+
+    if (should_stop == failsafe_stop) {
+        return;
+    }
+
+    failsafe_stop = should_stop;
+
+    if (failsafe_stop) {
+        ESP_LOGW(
+            TAG,
+            "FAILSAFE_STOP"
+        );
+
+        return;
+    }
+
+    ESP_LOGI(
+        TAG,
+        "CONTROL_ACTIVE"
+    );
+}
+
 
 void receiver_task(void *arg)
 {
@@ -61,7 +121,16 @@ void receiver_task(void *arg)
     size_t line_length = 0;
     bool dropping_overflow_line = false;
 
+    rcws::ReceiverGuard receiver_guard{COMMAND_TIMEOUT_US};
+    bool failsafe_stop = true;
+
     while (true) {
+
+         update_failsafe_state(
+        receiver_guard,
+        failsafe_stop
+        );
+
         const ssize_t received = read(
             STDIN_FILENO,
             rx_buffer,
@@ -106,7 +175,10 @@ void receiver_task(void *arg)
 
                 line[line_length] = '\0';
 
-                process_line(line);
+                process_line(
+                    line,
+                    receiver_guard
+                );
 
                 line_length = 0;
                 continue;
@@ -130,6 +202,7 @@ void receiver_task(void *arg)
             dropping_overflow_line = true;
         }
     }
+
 }
 
 }  // namespace

@@ -2,6 +2,9 @@ idf_component_register(
     SRCS
         "main.cpp"
         "protocol.cpp"
+        "receiver_guard.cpp"
     INCLUDE_DIRS
         "."
+    REQUIRES
+        esp_timer
 )
