@@ -6,18 +6,50 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 
+#include "protocol.hpp"
+
 namespace {
 
 constexpr size_t RX_CHUNK_SIZE = 64;
 constexpr size_t RX_LINE_SIZE = 128;
 
-constexpr UBaseType_t RECEIVER_TASK_PRIORITY = tskIDLE_PRIORITY + 1;
+constexpr UBaseType_t RECEIVER_TASK_PRIORITY =
+    tskIDLE_PRIORITY + 1;
+
 constexpr uint32_t RECEIVER_TASK_STACK_SIZE = 4096;
 
-// Always yield for at least one RTOS tick when no serial data is available.
 constexpr TickType_t RX_IDLE_DELAY_TICKS = 1;
 
 const char *TAG = "rcws_rx";
+
+void process_line(char *line)
+{
+    rcws::WireCommand command{};
+    rcws::ParseError error = rcws::ParseError::None;
+
+    if (!rcws::decode_command(
+            line,
+            command,
+            error
+        )) {
+        ESP_LOGW(
+            TAG,
+            "RX rejected: %s",
+            rcws::parse_error_name(error)
+        );
+
+        return;
+    }
+
+    ESP_LOGI(
+        TAG,
+        "RX_OK seq=%u active=%d pan=%d tilt=%d",
+        static_cast<unsigned>(command.sequence),
+        command.active ? 1 : 0,
+        static_cast<int>(command.pan_milli),
+        static_cast<int>(command.tilt_milli)
+    );
+}
 
 void receiver_task(void *arg)
 {
@@ -36,9 +68,11 @@ void receiver_task(void *arg)
             sizeof(rx_buffer)
         );
 
-        // UART VFS stdin is non-blocking by default.
         if (received < 0) {
-            if (errno != EAGAIN && errno != EWOULDBLOCK) {
+            if (
+                errno != EAGAIN &&
+                errno != EWOULDBLOCK
+            ) {
                 ESP_LOGE(
                     TAG,
                     "stdin read failed: errno=%d",
@@ -56,28 +90,28 @@ void receiver_task(void *arg)
         }
 
         for (ssize_t i = 0; i < received; ++i) {
-            const char ch = static_cast<char>(rx_buffer[i]);
+            const char ch =
+                static_cast<char>(rx_buffer[i]);
 
-            // Ignore CR so both LF and CRLF terminals work.
-         if (ch == '\r' || ch == '\n') {
-            if (dropping_overflow_line) {
-                dropping_overflow_line = false;
+            if (ch == '\r' || ch == '\n') {
+                if (dropping_overflow_line) {
+                    dropping_overflow_line = false;
+                    line_length = 0;
+                    continue;
+                }
+
+                if (line_length == 0) {
+                    continue;
+                }
+
+                line[line_length] = '\0';
+
+                process_line(line);
+
                 line_length = 0;
                 continue;
             }
 
-            if (line_length == 0) {
-                continue;
-            }
-
-            line[line_length] = '\0';
-
-            printf("RX_RAW:%s\n", line);
-
-            line_length = 0;
-            continue;
-        }
-            // Ignore the rest of an oversized packet until newline.
             if (dropping_overflow_line) {
                 continue;
             }
@@ -102,11 +136,13 @@ void receiver_task(void *arg)
 
 extern "C" void app_main(void)
 {
-    // Avoid stdio buffering during serial command testing.
     setvbuf(stdin, nullptr, _IONBF, 0);
     setvbuf(stdout, nullptr, _IONBF, 0);
 
-    ESP_LOGI(TAG, "RCWS raw receiver ready");
+    ESP_LOGI(
+        TAG,
+        "RCWS protocol receiver ready"
+    );
 
     const BaseType_t task_created = xTaskCreate(
         receiver_task,
@@ -118,6 +154,9 @@ extern "C" void app_main(void)
     );
 
     if (task_created != pdPASS) {
-        ESP_LOGE(TAG, "Failed to create receiver task");
+        ESP_LOGE(
+            TAG,
+            "Failed to create receiver task"
+        );
     }
 }
