@@ -14,5 +14,9 @@ class NullCommandOutput:
         # Intentionally discard the command.
         _ = command
 
+    def stop(self) -> None:
+        if self._closed:
+            raise RuntimeError("command output is closed")
+
     def close(self) -> None:
         self._closed = True

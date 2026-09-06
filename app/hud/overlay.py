@@ -7,7 +7,7 @@ from app.capture.latest_frame import StreamStats
 from app.detection.types import DetectionBatch
 from app.targeting.types import TargetSnapshot
 from app.telemetry.live import LiveTelemetrySnapshot
-from app.tracking.types import TrackBatch
+from app.tracking.types import Track, TrackBatch
 
 GREEN = (0, 255, 0)
 WHITE = (230, 230, 230)
@@ -177,6 +177,20 @@ def draw_detections(
         )
 
 
+def _is_selected_track(
+    track: Track,
+    target: TargetSnapshot,
+) -> bool:
+    selected = target.track
+
+    return (
+        target.is_locked
+        and selected is not None
+        and track.track_id == selected.track_id
+        and track.class_id == selected.class_id
+    )
+
+
 def draw_tracks(image: np.ndarray, batch: TrackBatch, target: TargetSnapshot) -> None:
     for track in batch.tracks:
         x1 = int(track.x1)
@@ -187,7 +201,7 @@ def draw_tracks(image: np.ndarray, batch: TrackBatch, target: TargetSnapshot) ->
         cx = int(track.center_x)
         cy = int(track.center_y)
 
-        is_selected = target.selected_track_id == track.track_id
+        is_selected = _is_selected_track(track, target)
 
         thickness = 3 if is_selected else 1
 

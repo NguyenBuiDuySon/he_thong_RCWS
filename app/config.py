@@ -276,6 +276,12 @@ def load_config(
                     2.0,
                 )
             ),
+            watchdog_timeout_s=float(
+                control.get(
+                    "watchdog_timeout_s",
+                    0.25,
+                )
+            ),
         ),
         display=DisplayConfig(
             window_name=str(display["window_name"]),
