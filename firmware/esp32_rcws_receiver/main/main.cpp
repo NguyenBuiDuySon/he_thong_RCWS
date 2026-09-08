@@ -24,6 +24,11 @@ constexpr UBaseType_t RECEIVER_TASK_PRIORITY =
 
 constexpr uint32_t RECEIVER_TASK_STACK_SIZE = 4096;
 
+constexpr UBaseType_t COMMAND_OUTPUT_TASK_PRIORITY =
+    tskIDLE_PRIORITY + 1;
+
+constexpr uint32_t COMMAND_OUTPUT_TASK_STACK_SIZE = 3072;
+
 constexpr TickType_t RX_IDLE_DELAY_TICKS = 1;
 
 constexpr std::int64_t COMMAND_TIMEOUT_US = 250'000;
@@ -186,6 +191,35 @@ void update_failsafe_state(
     );
 }
 
+void command_output_task(void *arg)
+{
+    (void)arg;
+
+    rcws::CommandState state{};
+
+    while (true) {
+        if (
+            xQueueReceive(
+                command_state_queue,
+                &state,
+                portMAX_DELAY
+            ) != pdPASS
+        ) {
+            continue;
+        }
+
+        ESP_LOGI(
+            TAG,
+            "OUTPUT_STATE seq=%u active=%d pan=%d tilt=%d reason=%s",
+            static_cast<unsigned>(state.sequence),
+            state.active ? 1 : 0,
+            static_cast<int>(state.pan_milli),
+            static_cast<int>(state.tilt_milli),
+            rcws::stop_reason_name(state.stop_reason)
+        );
+    }
+}
+
 
 void receiver_task(void *arg)
 {
@@ -318,6 +352,25 @@ extern "C" void app_main(void)
 
         return;
     }
+
+    const BaseType_t output_task_created = xTaskCreate(
+    command_output_task,
+    "rcws_command_output",
+    COMMAND_OUTPUT_TASK_STACK_SIZE,
+    nullptr,
+    COMMAND_OUTPUT_TASK_PRIORITY,
+    nullptr
+);
+
+if (output_task_created != pdPASS) {
+    ESP_LOGE(
+        TAG,
+        "Failed to create command output task"
+    );
+
+    return;
+}
+
 
     const BaseType_t task_created = xTaskCreate(
         receiver_task,
