@@ -3,6 +3,7 @@ idf_component_register(
         "main.cpp"
         "protocol.cpp"
         "receiver_guard.cpp"
+        "command_state.cpp"
     INCLUDE_DIRS
         "."
     REQUIRES

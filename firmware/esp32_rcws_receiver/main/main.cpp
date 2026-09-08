@@ -7,8 +7,10 @@
 #include "esp_timer.h"
 
 #include "freertos/FreeRTOS.h"
+#include "freertos/queue.h"
 #include "freertos/task.h"
 
+#include "command_state.hpp"
 #include "protocol.hpp"
 #include "receiver_guard.hpp"
 
@@ -25,12 +27,55 @@ constexpr uint32_t RECEIVER_TASK_STACK_SIZE = 4096;
 constexpr TickType_t RX_IDLE_DELAY_TICKS = 1;
 
 constexpr std::int64_t COMMAND_TIMEOUT_US = 250'000;
+constexpr UBaseType_t COMMAND_STATE_QUEUE_LENGTH = 1;
+QueueHandle_t command_state_queue = nullptr;
 
 const char *TAG = "rcws_rx";
 
+
+void publish_command_state(
+    const rcws::CommandState &state
+)
+{
+    if (command_state_queue == nullptr) {
+        ESP_LOGE(
+            TAG,
+            "Command state queue unavailable"
+        );
+
+        return;
+    }
+
+    if (
+        xQueueOverwrite(
+            command_state_queue,
+            &state
+        ) != pdPASS
+    ) {
+        ESP_LOGE(
+            TAG,
+            "Failed to publish command state"
+        );
+
+        return;
+    }
+
+    ESP_LOGI(
+        TAG,
+        "STATE seq=%u active=%d pan=%d tilt=%d reason=%s",
+        static_cast<unsigned>(state.sequence),
+        state.active ? 1 : 0,
+        static_cast<int>(state.pan_milli),
+        static_cast<int>(state.tilt_milli),
+        rcws::stop_reason_name(state.stop_reason)
+    );
+}
+
 void process_line(
-    char *line,
-    rcws::ReceiverGuard &receiver_guard
+      char *line,
+    rcws::ReceiverGuard &receiver_guard,
+    rcws::CommandStateMachine &command_state,
+    bool &failsafe_stop
 )
 {
     rcws::WireCommand command{};
@@ -69,44 +114,75 @@ void process_line(
         return;
     }
 
+    const rcws::CommandState &state =
+    command_state.apply(
+        command,
+        now_us
+    );
+
+publish_command_state(state);
+
+if (state.active) {
+    if (failsafe_stop) {
+        ESP_LOGI(
+            TAG,
+            "CONTROL_ACTIVE"
+        );
+    }
+
+    failsafe_stop = false;
+} else {
+    if (!failsafe_stop) {
+        ESP_LOGW(
+            TAG,
+            "CONTROL_STOP reason=inactive_command"
+        );
+    }
+
+    failsafe_stop = true;
+}
+
+
     ESP_LOGI(
         TAG,
         "RX_OK seq=%u active=%d pan=%d tilt=%d",
-        static_cast<unsigned>(command.sequence),
-        command.active ? 1 : 0,
-        static_cast<int>(command.pan_milli),
-        static_cast<int>(command.tilt_milli)
+        static_cast<unsigned>(state.sequence),
+        state.active ? 1 : 0,
+        static_cast<int>(state.pan_milli),
+        static_cast<int>(state.tilt_milli)
     );
 }
 
 void update_failsafe_state(
     rcws::ReceiverGuard &receiver_guard,
+    rcws::CommandStateMachine &command_state,
     bool &failsafe_stop
 )
 {
-    const bool should_stop =
-        receiver_guard.should_stop(
-            esp_timer_get_time()
-        );
-
-    if (should_stop == failsafe_stop) {
-        return;
-    }
-
-    failsafe_stop = should_stop;
-
     if (failsafe_stop) {
-        ESP_LOGW(
-            TAG,
-            "FAILSAFE_STOP"
-        );
-
         return;
     }
 
-    ESP_LOGI(
+    const std::int64_t now_us =
+        esp_timer_get_time();
+
+    if (!receiver_guard.should_stop(now_us)) {
+        return;
+    }
+
+    const rcws::CommandState &state =
+        command_state.stop(
+            rcws::StopReason::timeout,
+            now_us
+        );
+
+    publish_command_state(state);
+
+    failsafe_stop = true;
+
+    ESP_LOGW(
         TAG,
-        "CONTROL_ACTIVE"
+        "FAILSAFE_STOP reason=timeout"
     );
 }
 
@@ -121,13 +197,23 @@ void receiver_task(void *arg)
     size_t line_length = 0;
     bool dropping_overflow_line = false;
 
-    rcws::ReceiverGuard receiver_guard{COMMAND_TIMEOUT_US};
+    rcws::ReceiverGuard receiver_guard{
+        COMMAND_TIMEOUT_US
+    };
+
+    rcws::CommandStateMachine command_state;
+
     bool failsafe_stop = true;
+
+    publish_command_state(
+        command_state.current()
+    );
 
     while (true) {
 
-         update_failsafe_state(
+        update_failsafe_state(
         receiver_guard,
+        command_state,
         failsafe_stop
         );
 
@@ -176,8 +262,10 @@ void receiver_task(void *arg)
                 line[line_length] = '\0';
 
                 process_line(
-                    line,
-                    receiver_guard
+                     line,
+                    receiver_guard,
+                    command_state,
+                    failsafe_stop
                 );
 
                 line_length = 0;
@@ -216,6 +304,20 @@ extern "C" void app_main(void)
         TAG,
         "RCWS protocol receiver ready"
     );
+
+    command_state_queue = xQueueCreate(
+    COMMAND_STATE_QUEUE_LENGTH,
+    sizeof(rcws::CommandState)
+    );
+
+    if (command_state_queue == nullptr) {
+        ESP_LOGE(
+            TAG,
+            "Failed to create command state queue"
+        );
+
+        return;
+    }
 
     const BaseType_t task_created = xTaskCreate(
         receiver_task,
