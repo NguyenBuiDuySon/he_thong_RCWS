@@ -5,8 +5,10 @@ idf_component_register(
         "receiver_guard.cpp"
         "command_state.cpp"
         "actuator_output.cpp"
+        "step_dir_actuator.cpp"
     INCLUDE_DIRS
         "."
     REQUIRES
         esp_timer
+        esp_driver_gpio
 )

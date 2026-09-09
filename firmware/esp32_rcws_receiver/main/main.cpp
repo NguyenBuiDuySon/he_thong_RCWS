@@ -13,6 +13,8 @@
 #include "command_state.hpp"
 #include "protocol.hpp"
 #include "receiver_guard.hpp"
+#include "step_dir_actuator.hpp"
+
 
 namespace {
 
@@ -375,7 +377,27 @@ extern "C" void app_main(void)
         return;
     }
 
-    static rcws::NullActuatorOutput actuator_output;
+    static rcws::StepDirActuatorOutput actuator_output;
+
+rcws::StepDirPins actuator_pins{};
+
+// Temporary ESP32-S3 pin assignment.
+// Change later according to the final PCB/wiring.
+actuator_pins.pan_step = GPIO_NUM_4;
+actuator_pins.pan_dir = GPIO_NUM_5;
+actuator_pins.pan_enable = GPIO_NUM_6;
+
+actuator_pins.tilt_step = GPIO_NUM_7;
+actuator_pins.tilt_dir = GPIO_NUM_8;
+actuator_pins.tilt_enable = GPIO_NUM_9;
+
+actuator_pins.enable_active_low = true;
+actuator_pins.pan_dir_inverted = false;
+actuator_pins.tilt_dir_inverted = false;
+
+ESP_ERROR_CHECK(
+    actuator_output.init(actuator_pins)
+);
 
    const BaseType_t output_task_created = xTaskCreate(
     command_output_task,
