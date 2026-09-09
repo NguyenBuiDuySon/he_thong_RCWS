@@ -4,6 +4,7 @@ idf_component_register(
         "protocol.cpp"
         "receiver_guard.cpp"
         "command_state.cpp"
+        "actuator_output.cpp"
     INCLUDE_DIRS
         "."
     REQUIRES

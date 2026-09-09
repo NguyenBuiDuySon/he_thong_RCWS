@@ -9,7 +9,7 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/queue.h"
 #include "freertos/task.h"
-
+#include "actuator_output.hpp"
 #include "command_state.hpp"
 #include "protocol.hpp"
 #include "receiver_guard.hpp"
@@ -193,7 +193,18 @@ void update_failsafe_state(
 
 void command_output_task(void *arg)
 {
-    (void)arg;
+    auto *output =
+        static_cast<rcws::ActuatorOutput *>(arg);
+
+    if (output == nullptr) {
+        ESP_LOGE(
+            TAG,
+            "Actuator output unavailable"
+        );
+
+        vTaskDelete(nullptr);
+        return;
+    }
 
     rcws::CommandState state{};
 
@@ -206,6 +217,17 @@ void command_output_task(void *arg)
             ) != pdPASS
         ) {
             continue;
+        }
+
+        if (state.active) {
+            const rcws::ActuatorSetpoint setpoint{
+                state.pan_milli,
+                state.tilt_milli
+            };
+
+            output->apply(setpoint);
+        } else {
+            output->stop();
         }
 
         ESP_LOGI(
@@ -353,11 +375,13 @@ extern "C" void app_main(void)
         return;
     }
 
-    const BaseType_t output_task_created = xTaskCreate(
+    static rcws::NullActuatorOutput actuator_output;
+
+   const BaseType_t output_task_created = xTaskCreate(
     command_output_task,
     "rcws_command_output",
     COMMAND_OUTPUT_TASK_STACK_SIZE,
-    nullptr,
+    &actuator_output,
     COMMAND_OUTPUT_TASK_PRIORITY,
     nullptr
 );
