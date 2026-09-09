@@ -6,9 +6,11 @@ idf_component_register(
         "command_state.cpp"
         "actuator_output.cpp"
         "step_dir_actuator.cpp"
+        "step_pulse_engine.cpp"
     INCLUDE_DIRS
         "."
     REQUIRES
         esp_timer
         esp_driver_gpio
+        esp_driver_gptimer
 )

@@ -5,7 +5,7 @@
 
 #include "esp_log.h"
 #include "esp_timer.h"
-
+#include "esp_err.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/queue.h"
 #include "freertos/task.h"
@@ -14,7 +14,7 @@
 #include "protocol.hpp"
 #include "receiver_guard.hpp"
 #include "step_dir_actuator.hpp"
-
+#include "step_pulse_engine.hpp"
 
 namespace {
 
@@ -39,8 +39,7 @@ QueueHandle_t command_state_queue = nullptr;
 
 const char *TAG = "rcws_rx";
 
-
-void publish_command_state(
+ void publish_command_state(
     const rcws::CommandState &state
 )
 {
