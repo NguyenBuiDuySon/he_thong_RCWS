@@ -5,8 +5,6 @@
 #include "driver/gpio.h"
 #include "esp_err.h"
 #include "step_pulse_engine.hpp"
-#include "step_pulse_engine.hpp"
-
 namespace rcws {
 
 struct StepDirPins {
