@@ -4,6 +4,8 @@
 
 #include "driver/gpio.h"
 #include "esp_err.h"
+#include "step_pulse_engine.hpp"
+#include "step_pulse_engine.hpp"
 
 namespace rcws {
 
@@ -33,8 +35,9 @@ public:
 
 private:
     void set_enabled(bool enabled) noexcept;
-
     StepDirPins pins_{};
+    StepPulseEngine pan_step_engine_;
+    StepPulseEngine tilt_step_engine_;
     bool initialized_ = false;
 };
 
