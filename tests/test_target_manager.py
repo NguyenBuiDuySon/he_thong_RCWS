@@ -656,6 +656,7 @@ def test_reacquire_rejects_ambiguous_candidates() -> None:
     assert ambiguous.track is None
     assert ambiguous.missing_frames == 2
 
+
 def test_reacquire_requires_multi_frame_confirmation() -> None:
     manager = TargetManager(
         lost_timeout_frames=10,
@@ -680,9 +681,7 @@ def test_reacquire_requires_multi_frame_confirmation() -> None:
         )
     )
 
-    lost = manager.update(
-        make_batch(101)
-    )
+    lost = manager.update(make_batch(101))
 
     first_candidate_frame = manager.update(
         make_batch(

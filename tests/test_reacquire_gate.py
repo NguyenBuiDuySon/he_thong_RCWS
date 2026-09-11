@@ -92,6 +92,7 @@ def test_rejects_far_same_class_candidate() -> None:
         candidate,
     )
 
+
 def test_accepts_reasonable_geometry_change() -> None:
     memory = make_memory()
 
@@ -145,6 +146,7 @@ def test_rejects_large_aspect_ratio_change() -> None:
         candidate,
     )
 
+
 def test_score_prefers_more_similar_candidate() -> None:
     memory = make_memory()
 
@@ -178,4 +180,3 @@ def test_score_prefers_more_similar_candidate() -> None:
     assert more_similar_score is not None
 
     assert more_similar_score < less_similar_score
-

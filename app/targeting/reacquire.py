@@ -38,13 +38,9 @@ def is_reacquire_candidate(
     ):
         return False
 
-    dx_norm = (
-        candidate.center_x - memory.center_x
-    ) / memory.width
+    dx_norm = (candidate.center_x - memory.center_x) / memory.width
 
-    dy_norm = (
-        candidate.center_y - memory.center_y
-    ) / memory.height
+    dy_norm = (candidate.center_y - memory.center_y) / memory.height
 
     center_distance_norm = hypot(
         dx_norm,
@@ -59,26 +55,16 @@ def is_reacquire_candidate(
 
     scale_ratio = candidate_area / memory_area
 
-    if not (
-        1.0 / max_scale_ratio
-        <= scale_ratio
-        <= max_scale_ratio
-    ):
+    if not (1.0 / max_scale_ratio <= scale_ratio <= max_scale_ratio):
         return False
 
     memory_aspect_ratio = memory.width / memory.height
     candidate_aspect_ratio = candidate.width / candidate.height
 
-    aspect_ratio_ratio = (
-        candidate_aspect_ratio
-        / memory_aspect_ratio
-    )
+    aspect_ratio_ratio = candidate_aspect_ratio / memory_aspect_ratio
 
-    return (
-        1.0 / max_aspect_ratio_ratio
-        <= aspect_ratio_ratio
-        <= max_aspect_ratio_ratio
-    )
+    return 1.0 / max_aspect_ratio_ratio <= aspect_ratio_ratio <= max_aspect_ratio_ratio
+
 
 def score_reacquire_candidate(
     memory: LastTargetMemory,
@@ -90,13 +76,9 @@ def score_reacquire_candidate(
     ):
         return None
 
-    dx_norm = (
-        candidate.center_x - memory.center_x
-    ) / memory.width
+    dx_norm = (candidate.center_x - memory.center_x) / memory.width
 
-    dy_norm = (
-        candidate.center_y - memory.center_y
-    ) / memory.height
+    dy_norm = (candidate.center_y - memory.center_y) / memory.height
 
     center_distance = hypot(
         dx_norm,
@@ -111,16 +93,9 @@ def score_reacquire_candidate(
     memory_aspect_ratio = memory.width / memory.height
     candidate_aspect_ratio = candidate.width / candidate.height
 
-    aspect_ratio_ratio = (
-        candidate_aspect_ratio
-        / memory_aspect_ratio
-    )
+    aspect_ratio_ratio = candidate_aspect_ratio / memory_aspect_ratio
 
     scale_penalty = abs(log(scale_ratio))
     aspect_penalty = abs(log(aspect_ratio_ratio))
 
-    return (
-        center_distance
-        + 0.5 * scale_penalty
-        + 0.25 * aspect_penalty
-    )
+    return center_distance + 0.5 * scale_penalty + 0.25 * aspect_penalty

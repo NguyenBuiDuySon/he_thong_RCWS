@@ -11,6 +11,7 @@ class TargetStatus(StrEnum):
     LOCKED = "locked"
     LOST = "lost"
 
+
 @dataclass(frozen=True, slots=True)
 class LastTargetMemory:
     frame_id: int

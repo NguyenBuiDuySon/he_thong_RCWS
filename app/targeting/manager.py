@@ -28,9 +28,7 @@ class TargetManager:
             raise ValueError("min_reacquire_score_margin must be >= 0")
 
         if reacquire_confirm_frames < 1:
-            raise ValueError(
-                "reacquire_confirm_frames must be >= 1"
-            )
+            raise ValueError("reacquire_confirm_frames must be >= 1")
 
         self._lost_timeout_frames = lost_timeout_frames
         self._min_reacquire_score_margin = min_reacquire_score_margin
@@ -99,9 +97,7 @@ class TargetManager:
         if selected_track is None:
             candidate = self._find_reacquire_candidate(batch)
 
-            selected_track = self._confirm_reacquire_candidate(
-                candidate
-            )
+            selected_track = self._confirm_reacquire_candidate(candidate)
 
             if selected_track is not None:
                 self._selected_track_id = selected_track.track_id
@@ -202,9 +198,9 @@ class TargetManager:
         return best_track
 
     def _confirm_reacquire_candidate(
-    self,
-    candidate: Track | None,
-) -> Track | None:
+        self,
+        candidate: Track | None,
+    ) -> Track | None:
         if candidate is None:
             self._pending_reacquire_track_id = None
             self._pending_reacquire_frames = 0
@@ -216,10 +212,7 @@ class TargetManager:
             self._pending_reacquire_track_id = candidate.track_id
             self._pending_reacquire_frames = 1
 
-        if (
-            self._pending_reacquire_frames
-            < self._reacquire_confirm_frames
-        ):
+        if self._pending_reacquire_frames < self._reacquire_confirm_frames:
             return None
 
         self._pending_reacquire_track_id = None
