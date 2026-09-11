@@ -1,4 +1,7 @@
-from app.targeting.reacquire import is_reacquire_candidate
+from app.targeting.reacquire import (
+    is_reacquire_candidate,
+    score_reacquire_candidate,
+)
 from app.targeting.types import LastTargetMemory
 from app.tracking.types import Track
 
@@ -141,3 +144,38 @@ def test_rejects_large_aspect_ratio_change() -> None:
         memory,
         candidate,
     )
+
+def test_score_prefers_more_similar_candidate() -> None:
+    memory = make_memory()
+
+    less_similar = make_track(
+        3,
+        x1=500.0,
+        y1=200.0,
+        x2=700.0,
+        y2=680.0,
+    )
+
+    more_similar = make_track(
+        4,
+        x1=410.0,
+        y1=165.0,
+        x2=610.0,
+        y2=645.0,
+    )
+
+    less_similar_score = score_reacquire_candidate(
+        memory,
+        less_similar,
+    )
+
+    more_similar_score = score_reacquire_candidate(
+        memory,
+        more_similar,
+    )
+
+    assert less_similar_score is not None
+    assert more_similar_score is not None
+
+    assert more_similar_score < less_similar_score
+

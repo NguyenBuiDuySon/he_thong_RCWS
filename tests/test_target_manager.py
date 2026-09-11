@@ -485,7 +485,6 @@ def test_reacquires_new_track_id_near_last_target() -> None:
     assert reacquired.track.track_id == 4
     assert reacquired.missing_frames == 0
 
-
 def test_reacquire_prefers_nearby_same_class_candidate() -> None:
     manager = TargetManager(
         lost_timeout_frames=10,
@@ -546,3 +545,60 @@ def test_reacquire_prefers_nearby_same_class_candidate() -> None:
     assert reacquired.track is not None
     assert reacquired.track.track_id == 4
     assert reacquired.missing_frames == 0
+
+def test_reacquire_selects_best_candidate_not_first_candidate() -> None:
+    manager = TargetManager(
+        lost_timeout_frames=10,
+    )
+
+    manager.select(
+        0,
+        0,
+    )
+
+    manager.update(
+        make_batch(
+            100,
+            make_track(
+                0,
+                "person",
+                x1=400.0,
+                y1=160.0,
+                x2=600.0,
+                y2=640.0,
+            ),
+        )
+    )
+
+    manager.update(
+        make_batch(101)
+    )
+
+    reacquired = manager.update(
+        make_batch(
+            102,
+            # Hợp lệ, nhưng kém giống target cũ hơn.
+            make_track(
+                3,
+                "person",
+                x1=500.0,
+                y1=200.0,
+                x2=700.0,
+                y2=680.0,
+            ),
+            # Candidate tốt hơn nhưng nằm sau trong batch.
+            make_track(
+                4,
+                "person",
+                x1=410.0,
+                y1=165.0,
+                x2=610.0,
+                y2=645.0,
+            ),
+        )
+    )
+
+    assert reacquired.status is TargetStatus.LOCKED
+    assert reacquired.selected_track_id == 4
+    assert reacquired.track is not None
+    assert reacquired.track.track_id == 4

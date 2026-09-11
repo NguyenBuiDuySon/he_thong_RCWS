@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from app.targeting.reacquire import is_reacquire_candidate
+#from app.targeting.reacquire import is_reacquire_candidate
+from app.targeting.reacquire import score_reacquire_candidate
 from app.targeting.types import (
     LastTargetMemory,
     TargetSnapshot,
@@ -134,19 +135,28 @@ class TargetManager:
         return None
 
     def _find_reacquire_candidate(
-    self,
-    batch: TrackBatch,
-) -> Track | None:
+        self,
+        batch: TrackBatch,
+    ) -> Track | None:
         memory = self._last_target_memory
 
         if memory is None:
             return None
 
+        best_track: Track | None = None
+        best_score: float | None = None
+
         for track in batch.tracks:
-            if is_reacquire_candidate(
+            score = score_reacquire_candidate(
                 memory,
                 track,
-            ):
-                return track
+            )
 
-        return None
+            if score is None:
+                continue
+
+            if best_score is None or score < best_score:
+                best_track = track
+                best_score = score
+
+        return best_track

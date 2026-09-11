@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from math import hypot
+from math import hypot, log
 
 from app.targeting.types import LastTargetMemory
 from app.tracking.types import Track
@@ -78,4 +78,49 @@ def is_reacquire_candidate(
         1.0 / max_aspect_ratio_ratio
         <= aspect_ratio_ratio
         <= max_aspect_ratio_ratio
+    )
+
+def score_reacquire_candidate(
+    memory: LastTargetMemory,
+    candidate: Track,
+) -> float | None:
+    if not is_reacquire_candidate(
+        memory,
+        candidate,
+    ):
+        return None
+
+    dx_norm = (
+        candidate.center_x - memory.center_x
+    ) / memory.width
+
+    dy_norm = (
+        candidate.center_y - memory.center_y
+    ) / memory.height
+
+    center_distance = hypot(
+        dx_norm,
+        dy_norm,
+    )
+
+    memory_area = memory.width * memory.height
+    candidate_area = candidate.width * candidate.height
+
+    scale_ratio = candidate_area / memory_area
+
+    memory_aspect_ratio = memory.width / memory.height
+    candidate_aspect_ratio = candidate.width / candidate.height
+
+    aspect_ratio_ratio = (
+        candidate_aspect_ratio
+        / memory_aspect_ratio
+    )
+
+    scale_penalty = abs(log(scale_ratio))
+    aspect_penalty = abs(log(aspect_ratio_ratio))
+
+    return (
+        center_distance
+        + 0.5 * scale_penalty
+        + 0.25 * aspect_penalty
     )
