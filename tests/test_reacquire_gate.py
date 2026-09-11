@@ -88,3 +88,56 @@ def test_rejects_far_same_class_candidate() -> None:
         memory,
         candidate,
     )
+
+def test_accepts_reasonable_geometry_change() -> None:
+    memory = make_memory()
+
+    candidate = make_track(
+        4,
+        x1=400.0,
+        y1=155.0,
+        x2=620.0,
+        y2=655.0,
+    )
+
+    assert is_reacquire_candidate(
+        memory,
+        candidate,
+    )
+
+
+def test_rejects_large_bbox_scale_change() -> None:
+    memory = make_memory()
+
+    # Same center, same class, but bbox is much smaller.
+    candidate = make_track(
+        4,
+        x1=460.0,
+        y1=304.0,
+        x2=540.0,
+        y2=496.0,
+    )
+
+    assert not is_reacquire_candidate(
+        memory,
+        candidate,
+    )
+
+
+def test_rejects_large_aspect_ratio_change() -> None:
+    memory = make_memory()
+
+    # Same center and almost same area,
+    # but shape changes from tall to very wide.
+    candidate = make_track(
+        4,
+        x1=300.0,
+        y1=280.0,
+        x2=700.0,
+        y2=520.0,
+    )
+
+    assert not is_reacquire_candidate(
+        memory,
+        candidate,
+    )
