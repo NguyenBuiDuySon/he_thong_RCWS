@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from app.targeting.reacquire import is_reacquire_candidate
 from app.targeting.types import (
     LastTargetMemory,
     TargetSnapshot,
@@ -76,6 +77,12 @@ class TargetManager:
 
         selected_track = self._find_selected_track(batch)
 
+        if selected_track is None:
+            selected_track = self._find_reacquire_candidate(batch)
+
+            if selected_track is not None:
+                self._selected_track_id = selected_track.track_id
+
         if selected_track is not None:
             self._missing_frames = 0
 
@@ -87,7 +94,7 @@ class TargetManager:
             return TargetSnapshot(
                 frame_id=batch.frame_id,
                 status=TargetStatus.LOCKED,
-                selected_track_id=(self._selected_track_id),
+                selected_track_id=self._selected_track_id,
                 track=selected_track,
                 missing_frames=0,
             )
@@ -121,6 +128,24 @@ class TargetManager:
             if (
                 track.track_id == self._selected_track_id
                 and track.class_id == self._selected_class_id
+            ):
+                return track
+
+        return None
+
+    def _find_reacquire_candidate(
+    self,
+    batch: TrackBatch,
+) -> Track | None:
+        memory = self._last_target_memory
+
+        if memory is None:
+            return None
+
+        for track in batch.tracks:
+            if is_reacquire_candidate(
+                memory,
+                track,
             ):
                 return track
 
