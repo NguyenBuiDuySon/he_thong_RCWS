@@ -4,6 +4,15 @@
 ```md
 # ROADMAP
 
+## P1 — Smart Reacquire
+
+Status: DONE
+
+## P2 — Full tracking evaluation
+
+Status: ACTIVE
+
+
 ## P0 — Baseline architecture
 
 Status: DONE

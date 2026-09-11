@@ -1,6 +1,33 @@
 # CHECKPOINT
 
-Last updated: 2026-09-11
+Updated: 2026-09-11  6:50pm
+
+## Current active phase
+
+P2 — Full Tracking Evaluation
+
+## P1 — Smart Reacquire
+
+Status: DONE
+
+Completed:
+- LastTargetMemory
+- spatial gate
+- geometry gate
+- candidate scoring
+- ambiguity rejection
+- multi-frame confirmation
+
+Focused regression:
+26 passed
+
+Current vision branch:
+feat/vision-smart-reacquire
+
+Latest P1 implementation:
+d21b47c
+
+Updated: 2026-09-11 before 6:50 pm
 
 ## Project
 
