@@ -19,6 +19,7 @@ class TargetManager:
         *,
         lost_timeout_frames: int = 90,
         min_reacquire_score_margin: float = 0.10,
+        reacquire_confirm_frames: int = 2,
     ) -> None:
         if lost_timeout_frames < 1:
             raise ValueError("lost_timeout_frames must be >= 1")
@@ -26,12 +27,21 @@ class TargetManager:
         if min_reacquire_score_margin < 0.0:
             raise ValueError("min_reacquire_score_margin must be >= 0")
 
+        if reacquire_confirm_frames < 1:
+            raise ValueError(
+                "reacquire_confirm_frames must be >= 1"
+            )
+
         self._lost_timeout_frames = lost_timeout_frames
         self._min_reacquire_score_margin = min_reacquire_score_margin
         self._selected_track_id: int | None = None
         self._selected_class_id: int | None = None
         self._missing_frames = 0
         self._last_target_memory: LastTargetMemory | None = None
+        self._reacquire_confirm_frames = reacquire_confirm_frames
+
+        self._pending_reacquire_track_id: int | None = None
+        self._pending_reacquire_frames = 0
 
     @property
     def selected_track_id(self) -> int | None:
@@ -60,12 +70,16 @@ class TargetManager:
         self._selected_class_id = class_id
         self._missing_frames = 0
         self._last_target_memory = None
+        self._pending_reacquire_track_id = None
+        self._pending_reacquire_frames = 0
 
     def clear(self) -> None:
         self._selected_track_id = None
         self._selected_class_id = None
         self._missing_frames = 0
         self._last_target_memory = None
+        self._pending_reacquire_track_id = None
+        self._pending_reacquire_frames = 0
 
     def update(
         self,
@@ -83,10 +97,17 @@ class TargetManager:
         selected_track = self._find_selected_track(batch)
 
         if selected_track is None:
-            selected_track = self._find_reacquire_candidate(batch)
+            candidate = self._find_reacquire_candidate(batch)
+
+            selected_track = self._confirm_reacquire_candidate(
+                candidate
+            )
 
             if selected_track is not None:
                 self._selected_track_id = selected_track.track_id
+        else:
+            self._pending_reacquire_track_id = None
+            self._pending_reacquire_frames = 0
 
         if selected_track is not None:
             self._missing_frames = 0
@@ -179,3 +200,29 @@ class TargetManager:
             return None
 
         return best_track
+
+    def _confirm_reacquire_candidate(
+    self,
+    candidate: Track | None,
+) -> Track | None:
+        if candidate is None:
+            self._pending_reacquire_track_id = None
+            self._pending_reacquire_frames = 0
+            return None
+
+        if candidate.track_id == self._pending_reacquire_track_id:
+            self._pending_reacquire_frames += 1
+        else:
+            self._pending_reacquire_track_id = candidate.track_id
+            self._pending_reacquire_frames = 1
+
+        if (
+            self._pending_reacquire_frames
+            < self._reacquire_confirm_frames
+        ):
+            return None
+
+        self._pending_reacquire_track_id = None
+        self._pending_reacquire_frames = 0
+
+        return candidate
