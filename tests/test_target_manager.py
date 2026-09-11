@@ -325,6 +325,7 @@ def test_rejects_negative_class_id() -> None:
 
     raise AssertionError("Expected ValueError")
 
+
 def test_remembers_last_locked_target_geometry() -> None:
     manager = TargetManager()
 
@@ -392,9 +393,7 @@ def test_keeps_last_target_memory_while_lost() -> None:
 
     memory_before_lost = manager.last_target_memory
 
-    lost = manager.update(
-        make_batch(101)
-    )
+    lost = manager.update(make_batch(101))
 
     memory_while_lost = manager.last_target_memory
 
@@ -430,6 +429,7 @@ def test_clear_removes_last_target_memory() -> None:
 
     assert manager.last_target_memory is None
 
+
 def test_reacquires_new_track_id_near_last_target() -> None:
     manager = TargetManager(
         lost_timeout_frames=10,
@@ -454,13 +454,9 @@ def test_reacquires_new_track_id_near_last_target() -> None:
         )
     )
 
-    manager.update(
-        make_batch(101)
-    )
+    manager.update(make_batch(101))
 
-    manager.update(
-        make_batch(102)
-    )
+    manager.update(make_batch(102))
 
     reacquired = manager.update(
         make_batch(
@@ -484,6 +480,7 @@ def test_reacquires_new_track_id_near_last_target() -> None:
     assert reacquired.track is not None
     assert reacquired.track.track_id == 4
     assert reacquired.missing_frames == 0
+
 
 def test_reacquire_prefers_nearby_same_class_candidate() -> None:
     manager = TargetManager(
@@ -509,9 +506,7 @@ def test_reacquire_prefers_nearby_same_class_candidate() -> None:
         )
     )
 
-    lost = manager.update(
-        make_batch(201)
-    )
+    lost = manager.update(make_batch(201))
 
     reacquired = manager.update(
         make_batch(
@@ -546,6 +541,7 @@ def test_reacquire_prefers_nearby_same_class_candidate() -> None:
     assert reacquired.track.track_id == 4
     assert reacquired.missing_frames == 0
 
+
 def test_reacquire_selects_best_candidate_not_first_candidate() -> None:
     manager = TargetManager(
         lost_timeout_frames=10,
@@ -570,9 +566,7 @@ def test_reacquire_selects_best_candidate_not_first_candidate() -> None:
         )
     )
 
-    manager.update(
-        make_batch(101)
-    )
+    manager.update(make_batch(101))
 
     reacquired = manager.update(
         make_batch(
@@ -602,3 +596,59 @@ def test_reacquire_selects_best_candidate_not_first_candidate() -> None:
     assert reacquired.selected_track_id == 4
     assert reacquired.track is not None
     assert reacquired.track.track_id == 4
+
+
+def test_reacquire_rejects_ambiguous_candidates() -> None:
+    manager = TargetManager(
+        lost_timeout_frames=10,
+    )
+
+    manager.select(
+        0,
+        0,
+    )
+
+    manager.update(
+        make_batch(
+            100,
+            make_track(
+                0,
+                "person",
+                x1=400.0,
+                y1=160.0,
+                x2=600.0,
+                y2=640.0,
+            ),
+        )
+    )
+
+    lost = manager.update(make_batch(101))
+
+    ambiguous = manager.update(
+        make_batch(
+            102,
+            make_track(
+                3,
+                "person",
+                x1=410.0,
+                y1=165.0,
+                x2=610.0,
+                y2=645.0,
+            ),
+            make_track(
+                4,
+                "person",
+                x1=415.0,
+                y1=168.0,
+                x2=615.0,
+                y2=648.0,
+            ),
+        )
+    )
+
+    assert lost.status is TargetStatus.LOST
+
+    assert ambiguous.status is TargetStatus.LOST
+    assert ambiguous.selected_track_id == 0
+    assert ambiguous.track is None
+    assert ambiguous.missing_frames == 2

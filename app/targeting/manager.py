@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-#from app.targeting.reacquire import is_reacquire_candidate
+# from app.targeting.reacquire import is_reacquire_candidate
 from app.targeting.reacquire import score_reacquire_candidate
 from app.targeting.types import (
     LastTargetMemory,
@@ -18,16 +18,20 @@ class TargetManager:
         self,
         *,
         lost_timeout_frames: int = 90,
+        min_reacquire_score_margin: float = 0.10,
     ) -> None:
         if lost_timeout_frames < 1:
             raise ValueError("lost_timeout_frames must be >= 1")
 
+        if min_reacquire_score_margin < 0.0:
+            raise ValueError("min_reacquire_score_margin must be >= 0")
+
         self._lost_timeout_frames = lost_timeout_frames
+        self._min_reacquire_score_margin = min_reacquire_score_margin
         self._selected_track_id: int | None = None
         self._selected_class_id: int | None = None
         self._missing_frames = 0
         self._last_target_memory: LastTargetMemory | None = None
-
 
     @property
     def selected_track_id(self) -> int | None:
@@ -145,6 +149,7 @@ class TargetManager:
 
         best_track: Track | None = None
         best_score: float | None = None
+        second_best_score: float | None = None
 
         for track in batch.tracks:
             score = score_reacquire_candidate(
@@ -156,7 +161,21 @@ class TargetManager:
                 continue
 
             if best_score is None or score < best_score:
-                best_track = track
+                second_best_score = best_score
                 best_score = score
+                best_track = track
+                continue
+
+            if second_best_score is None or score < second_best_score:
+                second_best_score = score
+
+        if best_track is None or best_score is None:
+            return None
+
+        if (
+            second_best_score is not None
+            and second_best_score - best_score < self._min_reacquire_score_margin
+        ):
+            return None
 
         return best_track
