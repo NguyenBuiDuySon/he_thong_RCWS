@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from app.targeting.types import (
+    LastTargetMemory,
     TargetSnapshot,
     TargetStatus,
 )
@@ -23,10 +24,16 @@ class TargetManager:
         self._selected_track_id: int | None = None
         self._selected_class_id: int | None = None
         self._missing_frames = 0
+        self._last_target_memory: LastTargetMemory | None = None
+
 
     @property
     def selected_track_id(self) -> int | None:
         return self._selected_track_id
+
+    @property
+    def last_target_memory(self) -> LastTargetMemory | None:
+        return self._last_target_memory
 
     @property
     def has_selection(self) -> bool:
@@ -46,11 +53,13 @@ class TargetManager:
         self._selected_track_id = track_id
         self._selected_class_id = class_id
         self._missing_frames = 0
+        self._last_target_memory = None
 
     def clear(self) -> None:
         self._selected_track_id = None
         self._selected_class_id = None
         self._missing_frames = 0
+        self._last_target_memory = None
 
     def update(
         self,
@@ -69,6 +78,11 @@ class TargetManager:
 
         if selected_track is not None:
             self._missing_frames = 0
+
+            self._last_target_memory = LastTargetMemory.from_track(
+                frame_id=batch.frame_id,
+                track=selected_track,
+            )
 
             return TargetSnapshot(
                 frame_id=batch.frame_id,

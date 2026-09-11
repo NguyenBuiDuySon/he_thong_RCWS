@@ -325,6 +325,111 @@ def test_rejects_negative_class_id() -> None:
 
     raise AssertionError("Expected ValueError")
 
+def test_remembers_last_locked_target_geometry() -> None:
+    manager = TargetManager()
+
+    manager.select(
+        9,
+        0,
+    )
+
+    manager.update(
+        make_batch(
+            100,
+            make_track(
+                9,
+                "person",
+                x1=400.0,
+                y1=160.0,
+                x2=600.0,
+                y2=640.0,
+            ),
+        )
+    )
+
+    memory = manager.last_target_memory
+
+    assert memory is not None
+    assert memory.frame_id == 100
+    assert memory.track_id == 9
+    assert memory.class_id == 0
+    assert memory.class_name == "person"
+
+    assert memory.x1 == 400.0
+    assert memory.y1 == 160.0
+    assert memory.x2 == 600.0
+    assert memory.y2 == 640.0
+
+    assert memory.center_x == 500.0
+    assert memory.center_y == 400.0
+    assert memory.width == 200.0
+    assert memory.height == 480.0
+
+
+def test_keeps_last_target_memory_while_lost() -> None:
+    manager = TargetManager(
+        lost_timeout_frames=5,
+    )
+
+    manager.select(
+        9,
+        0,
+    )
+
+    manager.update(
+        make_batch(
+            100,
+            make_track(
+                9,
+                "person",
+                x1=400.0,
+                y1=160.0,
+                x2=600.0,
+                y2=640.0,
+            ),
+        )
+    )
+
+    memory_before_lost = manager.last_target_memory
+
+    lost = manager.update(
+        make_batch(101)
+    )
+
+    memory_while_lost = manager.last_target_memory
+
+    assert lost.status is TargetStatus.LOST
+
+    assert memory_before_lost is not None
+    assert memory_while_lost == memory_before_lost
+    assert memory_while_lost.frame_id == 100
+    assert memory_while_lost.track_id == 9
+
+
+def test_clear_removes_last_target_memory() -> None:
+    manager = TargetManager()
+
+    manager.select(
+        9,
+        0,
+    )
+
+    manager.update(
+        make_batch(
+            100,
+            make_track(
+                9,
+                "person",
+            ),
+        )
+    )
+
+    assert manager.last_target_memory is not None
+
+    manager.clear()
+
+    assert manager.last_target_memory is None
+
 def test_reacquires_new_track_id_near_last_target() -> None:
     manager = TargetManager(
         lost_timeout_frames=10,
