@@ -11,16 +11,22 @@ from app.tracking.types import (
 def make_track(
     track_id: int,
     class_name: str = "object",
+    *,
+    class_id: int = 0,
+    x1: float = 10.0,
+    y1: float = 20.0,
+    x2: float = 110.0,
+    y2: float = 220.0,
 ) -> Track:
     return Track(
         track_id=track_id,
-        class_id=0,
+        class_id=class_id,
         class_name=class_name,
         confidence=0.9,
-        x1=10.0,
-        y1=20.0,
-        x2=110.0,
-        y2=220.0,
+        x1=x1,
+        y1=y1,
+        x2=x2,
+        y2=y2,
     )
 
 
@@ -318,3 +324,120 @@ def test_rejects_negative_class_id() -> None:
         return
 
     raise AssertionError("Expected ValueError")
+
+def test_reacquires_new_track_id_near_last_target() -> None:
+    manager = TargetManager(
+        lost_timeout_frames=10,
+    )
+
+    manager.select(
+        0,
+        0,
+    )
+
+    locked = manager.update(
+        make_batch(
+            100,
+            make_track(
+                0,
+                "person",
+                x1=400.0,
+                y1=160.0,
+                x2=600.0,
+                y2=640.0,
+            ),
+        )
+    )
+
+    manager.update(
+        make_batch(101)
+    )
+
+    manager.update(
+        make_batch(102)
+    )
+
+    reacquired = manager.update(
+        make_batch(
+            103,
+            make_track(
+                4,
+                "person",
+                x1=420.0,
+                y1=170.0,
+                x2=620.0,
+                y2=650.0,
+            ),
+        )
+    )
+
+    assert locked.status is TargetStatus.LOCKED
+    assert locked.selected_track_id == 0
+
+    assert reacquired.status is TargetStatus.LOCKED
+    assert reacquired.selected_track_id == 4
+    assert reacquired.track is not None
+    assert reacquired.track.track_id == 4
+    assert reacquired.missing_frames == 0
+
+
+def test_reacquire_prefers_nearby_same_class_candidate() -> None:
+    manager = TargetManager(
+        lost_timeout_frames=10,
+    )
+
+    manager.select(
+        0,
+        0,
+    )
+
+    manager.update(
+        make_batch(
+            200,
+            make_track(
+                0,
+                "person",
+                x1=400.0,
+                y1=160.0,
+                x2=600.0,
+                y2=640.0,
+            ),
+        )
+    )
+
+    lost = manager.update(
+        make_batch(201)
+    )
+
+    reacquired = manager.update(
+        make_batch(
+            202,
+            # Person khác, cùng class nhưng ở xa.
+            make_track(
+                3,
+                "person",
+                x1=40.0,
+                y1=180.0,
+                x2=220.0,
+                y2=630.0,
+            ),
+            # Target cũ xuất hiện lại nhưng ByteTrack cấp ID mới.
+            make_track(
+                4,
+                "person",
+                x1=415.0,
+                y1=165.0,
+                x2=615.0,
+                y2=645.0,
+            ),
+        )
+    )
+
+    assert lost.status is TargetStatus.LOST
+    assert lost.selected_track_id == 0
+
+    assert reacquired.status is TargetStatus.LOCKED
+    assert reacquired.selected_track_id == 4
+    assert reacquired.track is not None
+    assert reacquired.track.track_id == 4
+    assert reacquired.missing_frames == 0
