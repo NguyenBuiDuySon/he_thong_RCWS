@@ -20,3 +20,16 @@ data/recordings/*
 
 # Temporary files
 *.log
+
+
+# Generated tracking evaluation
+data/benchmarks/tracking_replay*.csv
+data/benchmarks/tracking_events*.csv
+data/benchmarks/tracking_summary*.json
+data/benchmarks/reacquire_ground_truth*.json
+data/benchmarks/p26_smoke.csv
+data/benchmarks/test6_*_diag.csv
+data/benchmarks/test6_*_diag.json
+data/benchmarks/test6_*_events.csv
+data/benchmarks/threshold_sweep*.csv
+data/benchmarks/p26/

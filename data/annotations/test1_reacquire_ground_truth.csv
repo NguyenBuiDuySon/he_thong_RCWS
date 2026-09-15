@@ -1,0 +1,4 @@
+event_frame,event_time_s,lost_start_frame,reference_frame,old_track_id,new_track_id,lost_status_frames,elapsed_s,label
+329,11.467721481481481,328,327,0,3,1,0.03485629629629727,correct_reacquire
+408,14.221368888888888,405,404,3,4,3,0.10456888888888827,correct_reacquire
+629,21.92461037037037,598,597,4,6,31,1.080545185185187,correct_reacquire
