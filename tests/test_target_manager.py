@@ -721,3 +721,144 @@ def test_reacquire_requires_multi_frame_confirmation() -> None:
     assert confirmed.selected_track_id == 4
     assert confirmed.track is not None
     assert confirmed.track.track_id == 4
+
+
+def test_reacquire_exposes_ambiguity_diagnostics() -> None:
+    manager = TargetManager(
+        lost_timeout_frames=10,
+        min_reacquire_score_margin=0.10,
+    )
+
+    manager.select(
+        0,
+        0,
+    )
+
+    manager.update(
+        make_batch(
+            100,
+            make_track(
+                0,
+                "person",
+                x1=400.0,
+                y1=160.0,
+                x2=600.0,
+                y2=640.0,
+            ),
+        )
+    )
+
+    manager.update(make_batch(101))
+
+    manager.update(
+        make_batch(
+            102,
+            make_track(
+                3,
+                "person",
+                x1=410.0,
+                y1=165.0,
+                x2=610.0,
+                y2=645.0,
+            ),
+            make_track(
+                4,
+                "person",
+                x1=415.0,
+                y1=168.0,
+                x2=615.0,
+                y2=648.0,
+            ),
+        )
+    )
+
+    diagnostics = manager.reacquire_diagnostics
+
+    assert diagnostics.candidate_count == 2
+
+    assert diagnostics.best_score is not None
+    assert diagnostics.second_best_score is not None
+    assert diagnostics.score_gap is not None
+
+    assert diagnostics.score_gap == (
+        diagnostics.second_best_score - diagnostics.best_score
+    )
+
+    assert diagnostics.score_gap < 0.10
+    assert diagnostics.rejected_ambiguous
+
+
+def test_reacquire_reports_geometry_rejections() -> None:
+    manager = TargetManager(
+        lost_timeout_frames=10,
+        reacquire_confirm_frames=1,
+    )
+
+    manager.select(0, 0)
+
+    manager.update(
+        make_batch(
+            100,
+            make_track(
+                0,
+                "person",
+                x1=400.0,
+                y1=160.0,
+                x2=600.0,
+                y2=640.0,
+            ),
+        )
+    )
+
+    manager.update(make_batch(101))
+
+    manager.update(
+        make_batch(
+            102,
+            # Valid.
+            make_track(
+                3,
+                "person",
+                x1=410.0,
+                y1=165.0,
+                x2=610.0,
+                y2=645.0,
+            ),
+            # Reject center.
+            make_track(
+                4,
+                "person",
+                x1=40.0,
+                y1=180.0,
+                x2=220.0,
+                y2=630.0,
+            ),
+            # Reject scale.
+            make_track(
+                5,
+                "person",
+                x1=460.0,
+                y1=304.0,
+                x2=540.0,
+                y2=496.0,
+            ),
+            # Reject aspect.
+            make_track(
+                6,
+                "person",
+                x1=300.0,
+                y1=280.0,
+                x2=700.0,
+                y2=520.0,
+            ),
+        )
+    )
+
+    diagnostics = manager.reacquire_diagnostics
+
+    assert diagnostics.same_class_tracks == 4
+    assert diagnostics.candidate_count == 1
+
+    assert diagnostics.rejected_center == 1
+    assert diagnostics.rejected_scale == 1
+    assert diagnostics.rejected_aspect == 1

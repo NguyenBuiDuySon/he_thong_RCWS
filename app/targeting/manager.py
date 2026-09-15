@@ -1,9 +1,12 @@
 from __future__ import annotations
 
-# from app.targeting.reacquire import is_reacquire_candidate
-from app.targeting.reacquire import score_reacquire_candidate
+from app.targeting.reacquire import (
+    evaluate_reacquire_candidate,
+)
 from app.targeting.types import (
     LastTargetMemory,
+    ReacquireDiagnostics,
+    ReacquireRejectReason,
     TargetSnapshot,
     TargetStatus,
 )
@@ -41,6 +44,8 @@ class TargetManager:
         self._pending_reacquire_track_id: int | None = None
         self._pending_reacquire_frames = 0
 
+        self._reacquire_diagnostics = ReacquireDiagnostics()
+
     @property
     def selected_track_id(self) -> int | None:
         return self._selected_track_id
@@ -52,6 +57,12 @@ class TargetManager:
     @property
     def has_selection(self) -> bool:
         return self._selected_track_id is not None
+
+    @property
+    def reacquire_diagnostics(
+        self,
+    ) -> ReacquireDiagnostics:
+        return self._reacquire_diagnostics
 
     def select(
         self,
@@ -83,6 +94,9 @@ class TargetManager:
         self,
         batch: TrackBatch,
     ) -> TargetSnapshot:
+
+        self._reacquire_diagnostics = ReacquireDiagnostics()
+
         if self._selected_track_id is None:
             return TargetSnapshot(
                 frame_id=batch.frame_id,
@@ -168,14 +182,44 @@ class TargetManager:
         best_score: float | None = None
         second_best_score: float | None = None
 
+        same_class_tracks = 0
+        candidate_count = 0
+
+        rejected_invalid_geometry = 0
+        rejected_center = 0
+        rejected_scale = 0
+        rejected_aspect = 0
+
         for track in batch.tracks:
-            score = score_reacquire_candidate(
+            if track.class_id == memory.class_id:
+                same_class_tracks += 1
+
+            evaluation = evaluate_reacquire_candidate(
                 memory,
                 track,
             )
 
-            if score is None:
+            if not evaluation.accepted:
+                if evaluation.reject_reason is ReacquireRejectReason.INVALID_GEOMETRY:
+                    rejected_invalid_geometry += 1
+
+                elif evaluation.reject_reason is ReacquireRejectReason.CENTER:
+                    rejected_center += 1
+
+                elif evaluation.reject_reason is ReacquireRejectReason.SCALE:
+                    rejected_scale += 1
+
+                elif evaluation.reject_reason is ReacquireRejectReason.ASPECT:
+                    rejected_aspect += 1
+
                 continue
+
+            score = evaluation.score
+
+            if score is None:
+                raise RuntimeError("Accepted reacquire candidate has no score.")
+
+            candidate_count += 1
 
             if best_score is None or score < best_score:
                 second_best_score = best_score
@@ -186,13 +230,33 @@ class TargetManager:
             if second_best_score is None or score < second_best_score:
                 second_best_score = score
 
-        if best_track is None or best_score is None:
+        score_gap = (
+            None
+            if best_score is None or second_best_score is None
+            else second_best_score - best_score
+        )
+
+        rejected_ambiguous = (
+            score_gap is not None and score_gap < self._min_reacquire_score_margin
+        )
+
+        self._reacquire_diagnostics = ReacquireDiagnostics(
+            same_class_tracks=same_class_tracks,
+            candidate_count=candidate_count,
+            rejected_invalid_geometry=(rejected_invalid_geometry),
+            rejected_center=rejected_center,
+            rejected_scale=rejected_scale,
+            rejected_aspect=rejected_aspect,
+            best_score=best_score,
+            second_best_score=second_best_score,
+            score_gap=score_gap,
+            rejected_ambiguous=rejected_ambiguous,
+        )
+
+        if best_track is None:
             return None
 
-        if (
-            second_best_score is not None
-            and second_best_score - best_score < self._min_reacquire_score_margin
-        ):
+        if rejected_ambiguous:
             return None
 
         return best_track

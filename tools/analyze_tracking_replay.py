@@ -72,6 +72,20 @@ def main() -> None:
     new_id_reacquire_count = 0
     timeout_count = 0
 
+    reacquire_attempt_frames = 0
+    multi_candidate_frames = 0
+    ambiguous_rejection_frames = 0
+
+    same_class_tracks_total = 0
+    valid_candidates_total = 0
+
+    rejected_invalid_geometry_total = 0
+    rejected_center_total = 0
+    rejected_scale_total = 0
+    rejected_aspect_total = 0
+
+    score_gaps = MetricSeries()
+
     events: list[dict[str, object]] = []
 
     lost_start_frame: int | None = None
@@ -178,6 +192,36 @@ def main() -> None:
         if selected_id is not None:
             previous_selected_id = selected_id
 
+        candidate_count = int(row["reacquire_candidate_count"])
+
+        if candidate_count > 0:
+            reacquire_attempt_frames += 1
+
+        if candidate_count >= 2:
+            multi_candidate_frames += 1
+
+        if row["reacquire_rejected_ambiguous"] == "1":
+            ambiguous_rejection_frames += 1
+
+        score_gap_value = row["reacquire_score_gap"]
+
+        if score_gap_value != "":
+            score_gaps.add(float(score_gap_value))
+
+        same_class_tracks_total += int(row["reacquire_same_class_tracks"])
+
+        valid_candidates_total += int(row["reacquire_candidate_count"])
+
+        rejected_invalid_geometry_total += int(
+            row["reacquire_rejected_invalid_geometry"]
+        )
+
+        rejected_center_total += int(row["reacquire_rejected_center"])
+
+        rejected_scale_total += int(row["reacquire_rejected_scale"])
+
+        rejected_aspect_total += int(row["reacquire_rejected_aspect"])
+
     total_frames = len(rows)
 
     result = {
@@ -200,6 +244,22 @@ def main() -> None:
             "detector": (detector_ms.summarize().to_dict()),
             "tracking": (tracking_ms.summarize().to_dict()),
             "pipeline": (pipeline_ms.summarize().to_dict()),
+        },
+        "reacquire_diagnostics": {
+            "attempt_frames": reacquire_attempt_frames,
+            "multi_candidate_frames": (multi_candidate_frames),
+            "ambiguous_rejection_frames": (ambiguous_rejection_frames),
+            "score_gap": (
+                score_gaps.summarize().to_dict() if score_gaps.count > 0 else None
+            ),
+            "geometry_gate": {
+                "same_class_tracks": (same_class_tracks_total),
+                "valid_candidates": (valid_candidates_total),
+                "rejected_invalid_geometry": (rejected_invalid_geometry_total),
+                "rejected_center": (rejected_center_total),
+                "rejected_scale": (rejected_scale_total),
+                "rejected_aspect": (rejected_aspect_total),
+            },
         },
     }
 
@@ -258,6 +318,12 @@ def main() -> None:
     print(f"Timeouts        : {timeout_count}")
     print(f"Summary         : {args.output}")
     print(f"Events          : {args.events_output}")
+    print(f"Same-class cand.: {same_class_tracks_total}")
+    print(f"Valid candidates: {valid_candidates_total}")
+    print(f"Reject center   : {rejected_center_total}")
+    print(f"Reject scale    : {rejected_scale_total}")
+    print(f"Reject aspect   : {rejected_aspect_total}")
+    print(f"Reject invalid  : {rejected_invalid_geometry_total}")
 
 
 if __name__ == "__main__":

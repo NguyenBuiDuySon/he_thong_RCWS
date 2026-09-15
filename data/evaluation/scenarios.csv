@@ -1,0 +1,8 @@
+scenario_id,split,video_path,scenario,select_frame,select_x,select_y,notes
+test1,tune,data/recordings/test_1.mp4,multi_person_occlusion,5,640,360,multiple new-ID reacquires
+test2,validation,data/recordings/test_2.avi,clean_tracking,5,640,360,stable same-ID baseline
+test3,tune,data/recordings/test_3.mp4,scale_motion_change,5,640,360,target approaches and retreats
+test4,validation,data/recordings/test_4.mp4,closeup_stability,5,640,360,close-range stable tracking control
+test5,tune,data/recordings/test_5.mp4,exit_reenter_timeout,5,640,360,repeated exits re-entry and long disappearance
+test6,tune,data/recordings/test_6.mp4,two_person_crossing,5,640,360,same-class distractor crosses and occludes target
+test7,validation,data/recordings/test_7.mp4,two_person_distractor,5,640,360,held-out same-class distractor scenario

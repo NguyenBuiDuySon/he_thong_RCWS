@@ -61,6 +61,18 @@ def parse_args() -> argparse.Namespace:
         default=Path("data/benchmarks/tracking_replay.csv"),
     )
 
+    parser.add_argument(
+        "--min-reacquire-score-margin",
+        type=float,
+        default=0.10,
+    )
+
+    parser.add_argument(
+        "--reacquire-confirm-frames",
+        type=int,
+        default=2,
+    )
+
     return parser.parse_args()
 
 
@@ -103,7 +115,9 @@ def main() -> None:
     )
 
     target_manager = TargetManager(
-        lost_timeout_frames=(config.targeting.lost_timeout_frames)
+        lost_timeout_frames=(config.targeting.lost_timeout_frames),
+        min_reacquire_score_margin=(args.min_reacquire_score_margin),
+        reacquire_confirm_frames=(args.reacquire_confirm_frames),
     )
 
     ok, warmup_frame = capture.read()
@@ -148,6 +162,16 @@ def main() -> None:
         "detector_ms",
         "tracking_ms",
         "pipeline_ms",
+        "reacquire_candidate_count",
+        "reacquire_best_score",
+        "reacquire_second_best_score",
+        "reacquire_score_gap",
+        "reacquire_rejected_ambiguous",
+        "reacquire_same_class_tracks",
+        "reacquire_rejected_invalid_geometry",
+        "reacquire_rejected_center",
+        "reacquire_rejected_scale",
+        "reacquire_rejected_aspect",
     )
 
     processed_frames = 0
@@ -214,6 +238,8 @@ def main() -> None:
                 target = target_manager.update(tracks)
                 target_track = target.track
 
+                reacquire_diagnostics = target_manager.reacquire_diagnostics
+
                 pipeline_ms = (perf_counter_ns() - started_ns) / 1_000_000
 
                 writer.writerow(
@@ -240,6 +266,42 @@ def main() -> None:
                         "detector_ms": (detections.total_ms),
                         "tracking_ms": (tracks.tracking_ms),
                         "pipeline_ms": pipeline_ms,
+                        "reacquire_candidate_count": (
+                            reacquire_diagnostics.candidate_count
+                        ),
+                        "reacquire_best_score": (
+                            ""
+                            if reacquire_diagnostics.best_score is None
+                            else reacquire_diagnostics.best_score
+                        ),
+                        "reacquire_second_best_score": (
+                            ""
+                            if reacquire_diagnostics.second_best_score is None
+                            else reacquire_diagnostics.second_best_score
+                        ),
+                        "reacquire_score_gap": (
+                            ""
+                            if reacquire_diagnostics.score_gap is None
+                            else reacquire_diagnostics.score_gap
+                        ),
+                        "reacquire_rejected_ambiguous": int(
+                            reacquire_diagnostics.rejected_ambiguous
+                        ),
+                        "reacquire_same_class_tracks": (
+                            reacquire_diagnostics.same_class_tracks
+                        ),
+                        "reacquire_rejected_invalid_geometry": (
+                            reacquire_diagnostics.rejected_invalid_geometry
+                        ),
+                        "reacquire_rejected_center": (
+                            reacquire_diagnostics.rejected_center
+                        ),
+                        "reacquire_rejected_scale": (
+                            reacquire_diagnostics.rejected_scale
+                        ),
+                        "reacquire_rejected_aspect": (
+                            reacquire_diagnostics.rejected_aspect
+                        ),
                     }
                 )
 

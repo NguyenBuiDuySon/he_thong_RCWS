@@ -62,6 +62,36 @@ class LastTargetMemory:
         return self.y2 - self.y1
 
 
+class ReacquireRejectReason(StrEnum):
+    INVALID_GEOMETRY = "invalid_geometry"
+    CENTER = "center"
+    SCALE = "scale"
+    ASPECT = "aspect"
+
+
+@dataclass(frozen=True, slots=True)
+class ReacquireCandidateEvaluation:
+    accepted: bool
+    score: float | None = None
+    reject_reason: ReacquireRejectReason | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class ReacquireDiagnostics:
+    same_class_tracks: int = 0
+    candidate_count: int = 0
+
+    rejected_invalid_geometry: int = 0
+    rejected_center: int = 0
+    rejected_scale: int = 0
+    rejected_aspect: int = 0
+
+    best_score: float | None = None
+    second_best_score: float | None = None
+    score_gap: float | None = None
+    rejected_ambiguous: bool = False
+
+
 @dataclass(frozen=True, slots=True)
 class TargetSnapshot:
     frame_id: int
