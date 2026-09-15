@@ -160,3 +160,28 @@ Metric 3D state requires a valid additional source such as:
   depth camera;
   TOF/range sensor;
   radar.
+
+update 15/09/2026
+Recorded Video
+    ↓
+YoloDetector
+    ↓
+ByteTrackAdapter
+    ↓
+TargetManager
+    │
+    ├── TargetSnapshot
+    └── ReacquireDiagnostics
+            ↓
+      replay CSV
+            ↓
+ analyze_tracking_replay
+      │             │
+      ↓             ↓
+ summary JSON    events CSV
+                      ↓
+            human annotation
+                      ↓
+              ground truth
+                      ↓
+             threshold sweep

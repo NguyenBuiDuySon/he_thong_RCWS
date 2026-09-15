@@ -161,3 +161,33 @@ For algorithm changes:
 For hardware:
 
 `power -> MCU -> driver -> one axis -> second axis -> sensors -> full integration`
+
+## D013 — Reacquire baseline
+
+Keep the current baseline while P2 is active:
+
+- score margin: 0.10
+- confirmation: 2 frames
+- center gate: 1.0
+- scale gate: 2.5
+- aspect gate: 1.8
+
+Do not tune from intuition. Change one parameter only when recorded diagnostics justify it.
+
+## D014 — Tune / validation separation
+
+Thresholds are selected only from `tune` scenarios.
+
+Validation scenarios remain held out until a candidate configuration has been selected.
+
+Do not use validation results to repeatedly retune thresholds.
+
+## D015 — Generated evaluation artifacts
+
+Replay CSV, analyzer JSON and sweep outputs are reproducible runtime artifacts and are not committed.
+
+Scenario definitions and human ground-truth annotations are committed.
+
+## D016 — ReID remains evidence-gated
+
+P3 ReID stays deferred until recorded validation demonstrates false reacquisition that geometry + temporal confirmation cannot control acceptably.

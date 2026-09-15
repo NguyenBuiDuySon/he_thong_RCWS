@@ -1,187 +1,170 @@
 # CHECKPOINT
 
-Updated: 2026-09-11  6:50pm
+Updated: 2026-09-15
 
-## Current active phase
+## Current branch
+
+feat/vision-p2-evaluation
+
+Known HEAD after P2 evaluation assets:
+
+ba48547
+
+## Current phase
 
 P2 — Full Tracking Evaluation
+
+Status: ACTIVE
+
+## Verification checkpoint
+
+PC Vision:
+
+- `uv run ruff check .` — PASS
+- `uv run pytest -q` — 105 passed
+
+Focused Smart Reacquire:
+
+- P1 implementation — DONE
+- geometry diagnostics unit tests — PASS
 
 ## P1 — Smart Reacquire
 
 Status: DONE
 
-Completed:
+Implemented:
+
 - LastTargetMemory
-- spatial gate
-- geometry gate
+- same-class gating
+- normalized center-distance gate
+- bbox scale gate
+- aspect-ratio gate
 - candidate scoring
 - ambiguity rejection
 - multi-frame confirmation
+- per-frame reacquire diagnostics
+- geometry rejection diagnostics
 
-Focused regression:
-26 passed
+Current baseline:
 
-Current vision branch:
-feat/vision-smart-reacquire
+- max center distance norm: 1.0
+- max scale ratio: 2.5
+- max aspect-ratio ratio: 1.8
+- min reacquire score margin: 0.10
+- reacquire confirmation: 2 frames
+- lost timeout: 90 frames
 
-Latest P1 implementation:
-d21b47c
+Do not change these thresholds without recorded evaluation evidence.
 
-Updated: 2026-09-11 before 6:50 pm
+## P2 — Tracking Evaluation
 
-## Project
+Completed infrastructure:
 
-Multi-Sensor Stabilized Security Tracking Platform
+- recorded full-pipeline replay
+- replay CSV export
+- target bbox export
+- recovery / timeout event analysis
+- same-ID vs new-ID reacquire classification
+- human ground-truth annotation tool
+- ground-truth metric analyzer
+- tune / validation scenario matrix
+- automated threshold sweep
+- ambiguity score-gap diagnostics
+- geometry-gate rejection diagnostics
 
-## Current active phase
+Dataset definition:
 
-**P1 — Smart Reacquire**
+- tune: test1, test3, test5, test6
+- validation: test2, test4, test7
 
-Current substage:
+Recorded videos are local and intentionally not tracked by Git.
 
-**P1.2 / V12.2B — LastTargetMemory**
+Human ground truth currently committed:
 
----
+- test1
+- 3 new-ID reacquire events
+- 3 correct
+- 0 false
+- 0 uncertain
 
-## Vision status
+## P2.6 observations so far
 
-DONE:
+Threshold sweep:
 
-- Camera capture;
-- LatestFrameStream;
-- YOLO detector;
-- ByteTrack;
-- target click selection;
-- TargetManager;
-- IDLE / LOCKED / LOST;
-- target observation;
-- normalized tracking error;
-- dead-zone;
-- TrackingErrorFilter;
-- P tracking controller;
-- slew-rate limiter;
-- command output abstraction;
-- Null output;
-- Serial output;
-- RCWS1 protocol;
-- HUD / telemetry;
-- detector benchmarking tools.
+- score margins 0.05 / 0.10 / 0.15 produced no meaningful behavioral difference on current tune data
+- confirm=3 increased LOST time without demonstrated benefit
+- confirm=1 can produce direct LOCKED-ID switches
+- baseline confirm=2 remains preferred
 
-Baseline real-video tests:
+Current baseline remains:
 
-- static tracking: PASS;
-- normal movement: PASS;
-- substantial scale change: generally stable;
-- same-ID tracking: stable in ordinary motion;
-- tracker may assign a new ID after strong occlusion / leaving frame;
-- TargetManager currently cannot automatically reacquire a new ID.
+- score margin = 0.10
+- confirm frames = 2
 
-Important observed failure pattern:
+Ambiguity diagnostic on test6:
 
-`ID 0 LOCKED -> LOST -> same object returns as ID 4 -> TargetManager remains LOST`
+- reacquire attempt frames: 4
+- multi-candidate frames: 0
+- ambiguous rejection frames: 0
+- score gap: unavailable because no frame had >=2 valid candidates
 
-Multi-person test confirmed that same-class reacquisition cannot simply choose any visible `person`.
+Interpretation:
 
----
+geometry gating currently removes competing candidates before ambiguity scoring.
 
-## Smart Reacquire test status
+## Current substage
 
-Local `tests/test_target_manager.py` has two new expected-failure tests:
+P2.6F — Geometry gate diagnostics
 
-1. new nearby ID should be reacquired;
-2. when multiple same-class candidates exist, correct nearby candidate should be preferred.
+Implementation: DONE
+Unit tests: PASS
+Real-video evaluation: PENDING
 
-Observed result:
+Immediate next action:
 
-`11 passed, 2 failed`
+1. regenerate test6 replay using current geometry diagnostics
+2. analyze rejection totals
+3. inspect center / scale / aspect rejection distribution
+4. only then decide whether any geometry threshold needs tuning
 
-This is the expected RED state.
+Do not widen geometry gates without evidence.
 
-Do not modify the test expectation to make the test pass.
+## ReID
 
-Next implementation step:
+Status: DEFERRED
 
-create target memory / last-known geometry first.
-
-Do not add ReID yet.
-
----
-
-## ESP32 status
-
-Branch:
-
-`feat/esp32-actuator-output`
-
-Latest known cleanup commit:
-
-`b7142350f760facba72b98b566bddc7dbc5c58ec`
-
-Completed:
-
-- ESP-IDF receiver;
-- RCWS1 parsing;
-- sequence guard;
-- stale/replay rejection;
-- timeout failsafe;
-- CommandState;
-- FreeRTOS handoff;
-- ActuatorOutput abstraction;
-- StepDirActuatorOutput;
-- StepPulseEngine using GPTimer;
-- software smoke tests for PAN/TILT directions and STOP.
-
-Pending:
-
-**physical STEP / DIR / ENABLE verification**
+Do not implement P3 ReID yet.
 
 Reason:
 
-hardware not currently available.
+current data has not demonstrated a persistent false-reacquire problem that requires appearance embeddings.
 
-Do not continue real motor mapping until physical verification is possible.
+## ESP32 / Hardware
 
----
+Branch:
 
-## Hardware direction
+feat/esp32-actuator-output
 
-Current available / planned core:
+Status:
 
-- ESP32-S3;
-- DM542;
-- NEMA17;
-- pan/tilt mechanics;
-- RGB camera.
+software actuator path checkpointed.
 
-Future:
+Pending:
 
-- absolute encoder;
-- IMU;
-- range/depth;
-- radar;
-- thermal camera.
+physical STEP / DIR / ENABLE verification with real ESP32-S3 + DM542 + motor hardware.
 
-ORCAS is the primary current reference for mechanical/electrical integration methodology.
+Do not perform final motor calibration before physical verification.
 
----
+## Resume instructions
 
-## Immediate next action
+For a new session:
 
-Continue only:
-
-**P1.2 — LastTargetMemory**
-
-Goal:
-
-store last known target geometry while LOCKED.
-
-At this substage:
-
-- do not score candidates;
-- do not switch selected ID;
-- do not add ReID;
-- do not refactor unrelated modules.
-
-After focused tests are GREEN:
-
-continue to P1.3 spatial/geometry gating.
+1. read PROJECT_CHARTER.md
+2. read ARCHITECTURE.md
+3. read ROADMAP.md
+4. read DECISIONS.md
+5. read this CHECKPOINT.md
+6. verify current Git branch / HEAD
+7. run `uv run ruff check .`
+8. run `uv run pytest -q`
+9. continue only from "Immediate next action"

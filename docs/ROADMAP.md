@@ -4,6 +4,18 @@
 ```md
 # ROADMAP
 
+P2.1 recorded replay              DONE
+P2.2 replay analyzer              DONE
+P2.3 recovery event diagnostics   DONE
+P2.4 human ground truth           DONE
+P2.5 GT metrics                   DONE
+P2.6 threshold evaluation         ACTIVE
+  P2.6A scenario matrix           DONE
+  P2.6B threshold CLI             DONE
+  P2.6C automated sweep           DONE
+  P2.6E ambiguity diagnostics     DONE
+  P2.6F geometry diagnostics      ACTIVE
+
 ## P1 — Smart Reacquire
 
 Status: DONE
