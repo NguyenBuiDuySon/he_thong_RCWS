@@ -3,7 +3,65 @@
 This file records architectural decisions that should not be casually reversed.
 
 ---
+update 17/09/2026{
 
+## D017 — System V1 scope
+
+Decision:
+
+System V1 for the course project contains two command modes:
+
+1. MANUAL_GAMEPAD
+2. AUTO_VISION
+
+Vision V1 is the existing detector-based pipeline:
+
+YOLO -> ByteTrack -> TargetManager -> Smart Reacquire
+
+Manual ROI, Head/Gaze and radar tracking are not required for
+System V1 completion.
+
+Reason:
+
+Prefer a small number of fully integrated and validated functions
+over many partially implemented modes before the course deadline.
+
+---
+
+## D018 — Separate target source from command source
+
+Decision:
+
+Target acquisition/tracking and actuator command source are separate concepts.
+
+Examples:
+
+- YOLO / Manual ROI are target sources
+- Gamepad is a direct manual command source
+- Head/Gaze is an operator pointing command source
+- radar may later become a sensor-driven tracking source
+
+All actuator command sources must pass through a single arbitration
+boundary before the output / watchdog / ESP32 path.
+
+---
+
+## D019 — Vision version roadmap
+
+Decision:
+
+Vision development is versioned as:
+
+- Vision V1: Detector Target
+- Vision V2: Manual ROI
+- Vision V3: Detector + Manual ROI hybrid
+
+Manual ROI does not replace the validated Detector Target pipeline.
+
+The Vision V2/V3 design may be implemented after System V1 is stable.
+
+
+}
 ## D001 — Project scope
 
 Decision:

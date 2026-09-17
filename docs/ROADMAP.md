@@ -3,6 +3,80 @@
 
 ```md
 # ROADMAP
+update 17/09/2026(
+  # ROADMAP
+
+## Release roadmap
+
+### System V1 — Course Project
+
+Status: ACTIVE
+
+Required:
+
+- [x] Vision V1 detector tracking
+- [x] Smart Reacquire
+- [x] recorded evaluation / ground truth
+- [x] PC command output architecture
+- [x] ESP32 receiver / failsafe software
+- [ ] gamepad manual command source
+- [ ] MANUAL / AUTO_VISION mode manager
+- [ ] physical pan/tilt verification
+- [ ] integrated live test
+- [ ] final demo / report stabilization
+
+### Vision V2 — Manual ROI
+
+Status: PLANNED
+
+- arbitrary ROI designation
+- visual ROI tracker
+- common target adapter
+- LOST handling
+- live evaluation
+
+### Vision V3 — Hybrid
+
+Status: PLANNED
+
+- Detector Target
+- Manual ROI Target
+- common target representation
+- unified observation/control pipeline
+
+
+## P0 — Baseline Architecture
+
+Status: DONE
+
+## P1 — Smart Reacquire
+
+Status: DONE
+
+## P2 — Full Tracking Evaluation
+
+Status: DONE
+
+- P2.1 recorded replay — DONE
+- P2.2 replay analyzer — DONE
+- P2.3 event diagnostics — DONE
+- P2.4 human annotation — DONE
+- P2.5 ground-truth metrics — DONE
+- P2.6 threshold / geometry evaluation — DONE
+- P2.7 dataset baseline evaluation — DONE
+
+## P3 — Appearance / ReID
+
+Status: DEFERRED
+
+Current recorded evidence does not justify the added complexity.
+
+## P4 — 2D Motion-State Estimation
+
+Status: FUTURE
+
+
+)
 
 P2.1 recorded replay              DONE
 P2.2 replay analyzer              DONE
