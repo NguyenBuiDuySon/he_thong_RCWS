@@ -33,3 +33,12 @@ data/benchmarks/test6_*_diag.json
 data/benchmarks/test6_*_events.csv
 data/benchmarks/threshold_sweep*.csv
 data/benchmarks/p26/
+
+# Generated evaluation artifacts
+data/benchmarks/baseline/
+data/benchmarks/baseline_summary.csv
+data/benchmarks/reacquire_dataset_by_scenario.csv
+data/benchmarks/reacquire_dataset_summary.json
+data/benchmarks/test5_ground_truth.json
+data/benchmarks/test6_ground_truth.json
+data/benchmarks/test7_ground_truth.json
