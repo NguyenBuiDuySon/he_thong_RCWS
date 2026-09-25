@@ -1,6 +1,7 @@
 from app.control.mode import (
     CommandArbiter,
     ControlMode,
+    can_enter_auto_vision,
 )
 from app.control.types import PanTiltCommand
 
@@ -114,6 +115,7 @@ def test_setting_same_mode_does_not_interrupt() -> None:
 
     assert command == vision
 
+
 def test_auto_mode_ignores_manual_command_changes() -> None:
     arbiter = CommandArbiter(
         initial_mode=ControlMode.AUTO_VISION,
@@ -142,3 +144,22 @@ def test_auto_mode_ignores_manual_command_changes() -> None:
 
     assert first == vision
     assert second == vision
+
+
+def test_can_enter_auto_with_active_vision() -> None:
+    vision = make_command(
+        0.2,
+        -0.1,
+    )
+
+    assert can_enter_auto_vision(vision)
+
+
+def test_cannot_enter_auto_without_active_vision() -> None:
+    vision = PanTiltCommand(
+        pan_norm=0.0,
+        tilt_norm=0.0,
+        active=False,
+    )
+
+    assert not can_enter_auto_vision(vision)

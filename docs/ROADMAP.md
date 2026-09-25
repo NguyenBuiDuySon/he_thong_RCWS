@@ -3,6 +3,41 @@
 
 ```md
 # ROADMAP
+Update: 2026-09-25
+### Control V1
+
+- [x] C1 CommandArbiter
+- [x] C2 Gamepad input / mapping
+- [x] C3 RB mode switching
+- [x] C4A Vision integration
+- [x] C4B safety policy
+- [x] C4C HUD / configuration cleanup
+- [x] C5 integration tests
+- [x] C6 software acceptance
+
+Status: SOFTWARE COMPLETE
+
+Pending hardware:
+
+- [ ] H1 one-axis STEP/DIR verification
+- [ ] H2 two-axis pan / tilt verification
+- [ ] H3 direction / rate calibration
+- [ ] H4 final hardware acceptance
+
+Update: 2026-09-20
+### Control V1
+
+- [x] CommandArbiter
+- [x] Gamepad mapping
+- [x] Physical gamepad reader
+- [x] RB mode toggle
+- [x] safe transition STOP
+- [ ] C4A integrate AUTO_VISION
+- [ ] C4B safety / mode-transition hardening
+- [ ] C4C HUD / configuration cleanup
+- [ ] C5 integration tests
+- [ ] C6 software V1 acceptance
+
 update 17/09/2026(
   # ROADMAP
 

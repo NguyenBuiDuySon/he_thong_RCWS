@@ -3,6 +3,46 @@
 This file records architectural decisions that should not be casually reversed.
 
 ---
+Update: 2026-09-25
+## D021 — Control V1 software baseline frozen
+
+Decision:
+
+Control V1 software is frozen after successful MANUAL_GAMEPAD /
+AUTO_VISION integration and acceptance testing.
+
+Validated policy:
+
+- MANUAL_GAMEPAD owns output in manual mode
+- AUTO_VISION owns output in auto mode
+- mode changes insert an inactive STOP command
+- manual gamepad disconnect stops output
+- auto mode may continue after gamepad disconnect
+- loss of a valid Vision target stops auto output
+- AUTO_VISION entry requires an active Vision command
+
+Further changes to the control baseline require:
+
+- reproduced software failure, or
+- physical hardware evidence.
+
+Update: 2026-09-20
+
+## D020 — Control V1 mode switching
+
+Decision:
+
+System V1 uses RB on the gamepad to toggle:
+
+MANUAL_GAMEPAD <-> AUTO_VISION
+
+The button is processed using rising-edge detection so one physical
+press causes exactly one mode transition.
+
+Every successful mode change inserts an inactive STOP command before
+the newly selected source becomes active.
+
+
 update 17/09/2026{
 
 ## D017 — System V1 scope

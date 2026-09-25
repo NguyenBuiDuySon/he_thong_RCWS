@@ -32,6 +32,15 @@ control:
 
   watchdog_timeout_s: 0.25
 
+  gamepad:
+    joystick_index: 0
+    pan_axis_index: 0
+    tilt_axis_index: 1
+    mode_button_index: 5
+    dead_zone: 0.10
+    invert_tilt: true
+
+
 output:
   mode: "null"
 

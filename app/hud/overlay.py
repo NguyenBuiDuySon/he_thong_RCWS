@@ -4,6 +4,7 @@ import cv2
 import numpy as np
 
 from app.capture.latest_frame import StreamStats
+from app.control.mode import ControlMode
 from app.detection.types import DetectionBatch
 from app.targeting.types import TargetSnapshot
 from app.telemetry.live import LiveTelemetrySnapshot
@@ -71,6 +72,8 @@ def draw_status(
     track_count: int,
     unconfirmed_count: int,
     target: TargetSnapshot,
+    control_mode: ControlMode,
+    gamepad_connected: bool,
 ) -> None:
     if show_crosshair:
         draw_crosshair(image)
@@ -78,7 +81,8 @@ def draw_status(
     height, width = image.shape[:2]
 
     lines = (
-        "MODE: VIDEO",
+        f"CONTROL: {control_mode.value.upper()}",
+        ("GAMEPAD: ON" if gamepad_connected else "GAMEPAD: OFF"),
         f"FRAME: {frame_id}",
         (f"CAP FPS: {stream_stats.captured_fps:.1f}"),
         (f"PIPE FPS: {telemetry.pipeline_fps:.1f}"),

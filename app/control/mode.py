@@ -57,3 +57,9 @@ class CommandArbiter:
             return manual_command
 
         return auto_vision_command
+
+
+def can_enter_auto_vision(
+    vision_command: PanTiltCommand,
+) -> bool:
+    return vision_command.active

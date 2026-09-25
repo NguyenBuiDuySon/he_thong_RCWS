@@ -46,6 +46,16 @@ class TargetingConfig:
 
 
 @dataclass(frozen=True, slots=True)
+class GamepadConfig:
+    joystick_index: int
+    pan_axis_index: int
+    tilt_axis_index: int
+    mode_button_index: int
+    dead_zone: float
+    invert_tilt: bool
+
+
+@dataclass(frozen=True, slots=True)
 class ControlConfig:
     kp_pan: float
     kp_tilt: float
@@ -54,6 +64,7 @@ class ControlConfig:
     pan_rate_per_s: float
     tilt_rate_per_s: float
     watchdog_timeout_s: float
+    gamepad: GamepadConfig
 
 
 @dataclass(frozen=True, slots=True)
@@ -108,6 +119,10 @@ def load_config(
     tracker = raw["tracker"]
     targeting = raw.get("targeting", {})
     control = raw.get("control", {})
+    gamepad = control.get(
+        "gamepad",
+        {},
+    )
     output = raw.get("output", {})
     serial_output = output.get("serial", {})
     telemetry = raw["telemetry"]
@@ -307,6 +322,56 @@ def load_config(
                     "watchdog_timeout_s",
                     0.25,
                 )
+            ),
+            gamepad=GamepadConfig(
+                joystick_index=max(
+                    0,
+                    int(
+                        gamepad.get(
+                            "joystick_index",
+                            0,
+                        )
+                    ),
+                ),
+                pan_axis_index=max(
+                    0,
+                    int(
+                        gamepad.get(
+                            "pan_axis_index",
+                            0,
+                        )
+                    ),
+                ),
+                tilt_axis_index=max(
+                    0,
+                    int(
+                        gamepad.get(
+                            "tilt_axis_index",
+                            1,
+                        )
+                    ),
+                ),
+                mode_button_index=max(
+                    0,
+                    int(
+                        gamepad.get(
+                            "mode_button_index",
+                            5,
+                        )
+                    ),
+                ),
+                dead_zone=float(
+                    gamepad.get(
+                        "dead_zone",
+                        0.10,
+                    )
+                ),
+                invert_tilt=bool(
+                    gamepad.get(
+                        "invert_tilt",
+                        True,
+                    )
+                ),
             ),
         ),
         output=OutputConfig(

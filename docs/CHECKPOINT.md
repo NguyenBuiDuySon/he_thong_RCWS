@@ -1,4 +1,77 @@
 # CHECKPOINT
+Update: 2026-09-25
+## Control V1
+
+Status: SOFTWARE COMPLETE
+
+Completed:
+
+- C1 Command arbitration
+- C2 Gamepad input and mapping
+- C3 MANUAL / AUTO mode switching
+- C4A Vision + Gamepad integration
+- C4B safety policy
+- C4C HUD / configuration cleanup
+- C5A automated integration tests
+- C5B live integration validation
+- C6 software acceptance
+
+Verified:
+
+- MANUAL_GAMEPAD controls output from gamepad
+- AUTO_VISION controls output from Vision
+- only one command source owns output at a time
+- mode transition inserts STOP
+- gamepad disconnect in MANUAL -> STOP
+- gamepad disconnect in AUTO -> Vision continues
+- target loss in AUTO -> STOP
+- AUTO entry requires an active Vision target
+- Vision may continue tracking while MANUAL is active
+
+Software verification:
+
+- `uv run ruff check .` — PASS
+- `uv run pytest -q` — 130 passed
+- live integration acceptance — PASS
+
+Current limitation:
+
+Physical actuator verification is pending hardware arrival.
+
+
+Update: 2026-09-20
+## Control V1
+
+Status: ACTIVE
+
+Completed:
+
+- C1 CommandArbiter
+- C2A gamepad command mapping
+- C2B physical gamepad input
+- C3A MANUAL / AUTO arbitration
+- C3B RB mode toggle with rising-edge detection
+- safe STOP transition between command sources
+
+Verified:
+
+- Xbox-compatible controller detected through Pygame/SDL
+- left stick axis 0 -> pan
+- left stick axis 1 -> tilt
+- RB -> mode toggle
+- gamepad disconnect -> inactive manual command
+- focused control tests: PASS
+- full regression: 122 tests PASS
+
+Current modes:
+
+- MANUAL_GAMEPAD
+- AUTO_VISION
+
+Immediate next action:
+
+C4A — connect the real Vision tracking command to CommandArbiter.
+# CHECKPOINT
 Updated: 2026-09-17
 No false reacquisition was observed among 8 conclusively evaluated new-ID reacquisition events. One validation event remained uncertain. This dataset is too small to claim a general false-reacquisition rate of zero, but it does not currently justify introducing appearance/ReID complexity.
 

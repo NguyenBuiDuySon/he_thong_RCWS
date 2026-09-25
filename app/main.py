@@ -1,3 +1,4 @@
+import msvcrt
 from time import perf_counter_ns
 
 import cv2
@@ -5,6 +6,13 @@ import cv2
 from app.capture.camera import Camera
 from app.capture.latest_frame import LatestFrameStream
 from app.config import load_config
+from app.control.button import RisingEdgeButton
+from app.control.gamepad import GamepadCommandMapper
+from app.control.gamepad_input import PygameGamepadInput
+from app.control.mode import (
+    CommandArbiter,
+    ControlMode,
+)
 from app.control.slew_rate_limiter import CommandSlewRateLimiter
 from app.control.tracking_controller import TrackingController
 from app.control.watchdog import CommandWatchdog
@@ -32,6 +40,29 @@ from app.tracking.bytetrack_tracker import (
 )
 
 
+def read_app_key() -> int:
+    # OpenCV window input.
+    key = cv2.waitKeyEx(5)
+
+    if key != -1:
+        return key & 0xFF
+
+    # Windows terminal fallback.
+    if msvcrt.kbhit():
+        char = msvcrt.getwch()
+
+        # Ignore extended-key prefix.
+        if char in ("\x00", "\xe0"):
+            if msvcrt.kbhit():
+                msvcrt.getwch()
+
+            return -1
+
+        return ord(char.lower())
+
+    return -1
+
+
 def main() -> None:
     config = load_config("configs/default.yaml")
 
@@ -52,6 +83,26 @@ def main() -> None:
         max_pan_command=config.control.max_pan_command,
         max_tilt_command=config.control.max_tilt_command,
     )
+
+    gamepad = PygameGamepadInput(
+        joystick_index=(config.control.gamepad.joystick_index),
+        pan_axis_index=(config.control.gamepad.pan_axis_index),
+        tilt_axis_index=(config.control.gamepad.tilt_axis_index),
+        mode_button_index=(config.control.gamepad.mode_button_index),
+    )
+
+    gamepad_mapper = GamepadCommandMapper(
+        dead_zone=(config.control.gamepad.dead_zone),
+        max_pan_command=(config.control.max_pan_command),
+        max_tilt_command=(config.control.max_tilt_command),
+        invert_tilt=(config.control.gamepad.invert_tilt),
+    )
+
+    arbiter = CommandArbiter(
+        initial_mode=(ControlMode.MANUAL_GAMEPAD),
+    )
+
+    mode_button = RisingEdgeButton()
 
     command_limiter = CommandSlewRateLimiter(
         pan_rate_per_s=config.control.pan_rate_per_s,
@@ -207,8 +258,35 @@ def main() -> None:
                 active=filtered_error is not None,
             )
 
+            gamepad_state = gamepad.poll()
+
+            if not gamepad_state.connected:
+                mode_button.reset()
+
+            elif mode_button.update(gamepad_state.mode_button_pressed):
+                if arbiter.mode is ControlMode.MANUAL_GAMEPAD:
+                    if raw_command.active:
+                        arbiter.set_mode(ControlMode.AUTO_VISION)
+
+                        print("\nCONTROL MODE -> auto_vision")
+
+                    else:
+                        print("\nAUTO_VISION rejected: no active Vision target")
+
+                else:
+                    arbiter.set_mode(ControlMode.MANUAL_GAMEPAD)
+
+                    print("\nCONTROL MODE -> manual_gamepad")
+
+            manual_command = gamepad_mapper.update(gamepad_state)
+
+            selected_command = arbiter.select(
+                manual_command=manual_command,
+                auto_vision_command=raw_command,
+            )
+
             command = command_limiter.update(
-                raw_command,
+                selected_command,
                 timestamp_ns=packet.received_at_ns,
             )
 
@@ -229,15 +307,37 @@ def main() -> None:
                     cv2.LINE_AA,
                 )
 
-            raw_command_state = "ON" if raw_command.active else "OFF"
+            control_mode_text = (
+                "MANUAL"
+                if arbiter.mode is ControlMode.MANUAL_GAMEPAD
+                else "AUTO_VISION"
+            )
+
+            gamepad_status = "ON" if gamepad_state.connected else "OFF"
+
+            cv2.putText(
+                packet.image,
+                (f"CONTROL:{control_mode_text} PAD:{gamepad_status}"),
+                (
+                    16,
+                    packet.image.shape[0] - 138,
+                ),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.50,
+                (0, 255, 0),
+                1,
+                cv2.LINE_AA,
+            )
+
+            vision_command_state = "ON" if raw_command.active else "OFF"
 
             cv2.putText(
                 packet.image,
                 (
-                    f"RAW "
+                    f"VIS "
                     f"P:{raw_command.pan_norm:+.3f} "
                     f"T:{raw_command.tilt_norm:+.3f} "
-                    f"{raw_command_state}"
+                    f"{vision_command_state}"
                 ),
                 (
                     16,
@@ -255,7 +355,7 @@ def main() -> None:
             cv2.putText(
                 packet.image,
                 (
-                    f"CMD "
+                    f"OUT "
                     f"P:{command.pan_norm:+.3f} "
                     f"T:{command.tilt_norm:+.3f} "
                     f"{command_state}"
@@ -301,6 +401,8 @@ def main() -> None:
                 detector_precision=(detector.precision),
                 show_crosshair=(config.display.show_crosshair),
                 target=target,
+                control_mode=arbiter.mode,
+                gamepad_connected=(gamepad_state.connected),
             )
 
             if observation is not None:
@@ -348,20 +450,18 @@ def main() -> None:
                 packet.image,
             )
 
-            key = cv2.waitKey(1) & 0xFF
+            key = read_app_key()
 
             if key in (
                 ord("q"),
                 27,
             ):
                 break
-            if key in (
-                ord("c"),
-                ord("C"),
-            ):
+            if key == ord("c"):
                 target_manager.clear()
 
     finally:
+        gamepad.close()
         output.close()
         stream.stop()
         camera.close()

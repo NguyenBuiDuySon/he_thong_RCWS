@@ -11,3 +11,10 @@ def test_default_config_loads() -> None:
     assert config.output.mode == "null"
     assert config.output.serial.baudrate == 115200
     assert config.output.serial.write_timeout_s == 0.10
+
+    assert config.control.gamepad.joystick_index == 0
+    assert config.control.gamepad.pan_axis_index == 0
+    assert config.control.gamepad.tilt_axis_index == 1
+    assert config.control.gamepad.mode_button_index == 5
+    assert config.control.gamepad.dead_zone == 0.10
+    assert config.control.gamepad.invert_tilt is True

@@ -45,7 +45,12 @@ def main() -> None:
         FPS,
     )
 
-    fourcc = cv2.VideoWriter_fourcc(*"MJPG")
+    fourcc = cv2.VideoWriter.fourcc(
+        "M",
+        "J",
+        "P",
+        "G",
+    )
 
     writer = cv2.VideoWriter(
         str(output_path),
