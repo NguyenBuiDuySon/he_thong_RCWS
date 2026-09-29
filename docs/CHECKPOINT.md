@@ -1,6 +1,19 @@
 # CHECKPOINT
 # CHECKPOINT
 Update: 2026-09-29
+### VH2 — Target Selection / Operator UX
+
+Status: DONE
+
+Verified:
+
+- left click selects a tracked target
+- selection success shows operator feedback
+- click miss shows SELECT MISS
+- click miss does not clear an existing target
+- selecting another track retargets immediately
+- right click / C clears the target
+- clear returns TargetManager to IDLE
 
 ## Vision V1 Hardening
 

@@ -244,3 +244,27 @@ def draw_tracks(image: np.ndarray, batch: TrackBatch, target: TargetSnapshot) ->
             GREEN,
             -1,
         )
+
+
+def draw_operator_notice(
+    image: np.ndarray,
+    text: str | None,
+) -> None:
+    if text is None:
+        return
+
+    height = image.shape[0]
+
+    cv2.putText(
+        image,
+        f"OPERATOR: {text}",
+        (
+            16,
+            height - 162,
+        ),
+        cv2.FONT_HERSHEY_SIMPLEX,
+        0.55,
+        WHITE,
+        2,
+        cv2.LINE_AA,
+    )

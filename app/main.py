@@ -17,7 +17,9 @@ from app.control.slew_rate_limiter import CommandSlewRateLimiter
 from app.control.tracking_controller import TrackingController
 from app.control.watchdog import CommandWatchdog
 from app.detection.yolo_detector import YoloDetector
+from app.hud.notice import OperatorNotice
 from app.hud.overlay import (
+    draw_operator_notice,
     draw_status,
     draw_tracks,
 )
@@ -126,6 +128,7 @@ def main() -> None:
     )
 
     mouse_input = MouseTargetInput()
+    operator_notice = OperatorNotice(duration_s=1.5)
     raw_output = build_command_output(config.output)
     output = CommandWatchdog(
         raw_output,
@@ -214,15 +217,9 @@ def main() -> None:
                 output.stop()
 
                 if stream.stopped:
-                    print(
-                        "VISION FAILSAFE: "
-                        "camera capture stopped -> OUTPUT STOP"
-                    )
+                    print("VISION FAILSAFE: camera capture stopped -> OUTPUT STOP")
                 else:
-                    print(
-                        "VISION FAILSAFE: "
-                        "camera frame timeout -> OUTPUT STOP"
-                    )
+                    print("VISION FAILSAFE: camera frame timeout -> OUTPUT STOP")
 
                 break
             batch, track_batch = process_perception_frame(
@@ -237,6 +234,11 @@ def main() -> None:
             if mouse_action is not None:
                 if mouse_action.action is MouseActionType.CLEAR:
                     target_manager.clear()
+
+                    operator_notice.show(
+                        "TARGET CLEARED",
+                        now_ns=packet.received_at_ns,
+                    )
 
                 elif (
                     mouse_action.action is MouseActionType.SELECT
@@ -255,6 +257,20 @@ def main() -> None:
                             selected.class_id,
                         )
 
+                        operator_notice.show(
+                            (
+                                f"SELECTED ID "
+                                f"{selected.track_id} | "
+                                f"{selected.class_name}"
+                            ),
+                            now_ns=(packet.received_at_ns),
+                        )
+
+                    else:
+                        operator_notice.show(
+                            "SELECT MISS",
+                            now_ns=(packet.received_at_ns),
+                        )
             target = target_manager.update(track_batch)
 
             frame_height, frame_width = packet.image.shape[:2]
@@ -471,6 +487,11 @@ def main() -> None:
                     cv2.LINE_AA,
                 )
 
+            draw_operator_notice(
+                packet.image,
+                operator_notice.read(now_ns=packet.received_at_ns),
+            )
+
             cv2.imshow(
                 config.display.window_name,
                 packet.image,
@@ -485,6 +506,11 @@ def main() -> None:
                 break
             if key == ord("c"):
                 target_manager.clear()
+
+                operator_notice.show(
+                    "TARGET CLEARED",
+                    now_ns=packet.received_at_ns,
+                )
 
     finally:
         gamepad.close()

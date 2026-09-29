@@ -12,7 +12,7 @@ Update: 2026-09-29
   - [x] detector / tracker failure tests
   - [x] live failure smoke test
 
-- [ ] VH2 target selection / operator UX
+- [x] VH2 target selection / operator UX
 - [ ] VH3 live tracking robustness
 - [ ] VH4 performance / latency acceptance
 - [ ] VH5 demo workflow stabilization
