@@ -1,4 +1,35 @@
 # CHECKPOINT
+# CHECKPOINT
+Update: 2026-09-29
+
+## Vision V1 Hardening
+
+Status: ACTIVE
+
+### VH1 — Failure handling
+
+Status: DONE
+
+Completed:
+
+- VH1.1 camera stream failure detection
+- VH1.2 explicit output STOP on perception failure
+- VH1.3 testable detector / tracker failure boundary
+- VH1.4 live camera-loss / EOF smoke validation
+
+Verified behavior:
+
+- camera capture failure -> OUTPUT STOP
+- camera frame timeout -> OUTPUT STOP
+- detector exception -> OUTPUT STOP + exception propagation
+- tracker exception -> OUTPUT STOP + exception propagation
+- normal perception processing does not trigger false STOP
+- video EOF exits cleanly
+- physical camera starts normally after restoring live camera config
+
+Immediate next action:
+
+VH2 — Target Selection / Operator UX.
 Update: 2026-09-25
 ## Control V1
 

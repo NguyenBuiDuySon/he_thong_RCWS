@@ -3,6 +3,21 @@
 This file records architectural decisions that should not be casually reversed.
 
 ---
+Update: 2026-09-29
+## D022 — Vision perception failures fail to STOP
+Decision:
+
+Loss of the camera stream or an exception in the detector / tracker
+must stop the active output before the application exits or propagates
+the processing error.
+
+Perception exceptions are not silently swallowed.
+
+Reason:
+
+The system must not retain the last valid motion command after the
+Vision processing path becomes unavailable.
+
 Update: 2026-09-25
 ## D021 — Control V1 software baseline frozen
 

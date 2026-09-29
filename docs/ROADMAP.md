@@ -3,6 +3,21 @@
 
 ```md
 # ROADMAP
+Update: 2026-09-29
+### Vision V1 Hardening
+
+- [x] VH1 failure handling
+  - [x] camera stream failure handling
+  - [x] explicit perception failure STOP
+  - [x] detector / tracker failure tests
+  - [x] live failure smoke test
+
+- [ ] VH2 target selection / operator UX
+- [ ] VH3 live tracking robustness
+- [ ] VH4 performance / latency acceptance
+- [ ] VH5 demo workflow stabilization
+- [ ] VH6 Vision V1 freeze
+
 Update: 2026-09-25
 ### Control V1
 

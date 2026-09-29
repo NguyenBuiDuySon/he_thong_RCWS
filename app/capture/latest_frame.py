@@ -123,6 +123,10 @@ class LatestFrameStream:
         except Empty:
             return None
 
+    @property
+    def stopped(self) -> bool:
+        return self._stop_event.is_set()
+
     def stop(self) -> None:
         self._stop_event.set()
 

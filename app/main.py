@@ -24,6 +24,9 @@ from app.hud.overlay import (
 
 # from app.output import NullCommandOutput
 from app.output.factory import build_command_output
+from app.perception import (
+    process_perception_frame,
+)
 from app.targeting.filter import TrackingErrorFilter
 from app.targeting.manager import TargetManager
 from app.targeting.mouse import (
@@ -63,10 +66,23 @@ def read_app_key() -> int:
     return -1
 
 
+def stop_output_on_failure(
+    output: CommandWatchdog,
+) -> None:
+    output.stop()
+
+
 def main() -> None:
     config = load_config("configs/default.yaml")
 
     camera = Camera(config.camera)
+
+    warmup_packet = camera.read()
+
+    if warmup_packet is None:
+        camera.close()
+
+        raise RuntimeError("Cannot read detector warm-up frame.")
 
     detector = YoloDetector(config.detector)
 
@@ -115,11 +131,10 @@ def main() -> None:
         raw_output,
         timeout_s=config.control.watchdog_timeout_s,
     )
-    if warmup_packet is None:
-        raise RuntimeError("Cannot read detector warm-up frame.")
 
     print(f"Detector warm-up: {config.detector.warmup_iterations} iterations...")
 
+    assert warmup_packet is not None
     detector.warmup(
         warmup_packet,
         config.detector.warmup_iterations,
@@ -196,14 +211,25 @@ def main() -> None:
             packet = stream.read(timeout=1.0)
 
             if packet is None:
-                print("Camera frame timeout")
+                output.stop()
+
+                if stream.stopped:
+                    print(
+                        "VISION FAILSAFE: "
+                        "camera capture stopped -> OUTPUT STOP"
+                    )
+                else:
+                    print(
+                        "VISION FAILSAFE: "
+                        "camera frame timeout -> OUTPUT STOP"
+                    )
+
                 break
-
-            batch = detector.detect(packet)
-
-            track_batch = tracker.update(
+            batch, track_batch = process_perception_frame(
                 packet,
-                batch,
+                detector,
+                tracker,
+                on_failure=output.stop,
             )
 
             mouse_action = mouse_input.consume()
