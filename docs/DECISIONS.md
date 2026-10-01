@@ -3,6 +3,41 @@
 This file records architectural decisions that should not be casually reversed.
 
 ---
+## D023 — Vision V1 software baseline frozen
+Update: 2026-10-01
+Decision:
+
+Vision V1 detector-based tracking is frozen after successful
+evaluation, live robustness validation, performance acceptance
+and demo stabilization.
+
+Frozen pipeline:
+
+YOLO
+-> ByteTrack
+-> TargetManager
+-> Smart Reacquire
+-> TargetObservation
+-> TrackingErrorFilter
+-> TrackingController
+
+The validated reacquire baseline remains unchanged.
+
+Further changes to Vision V1 require either:
+
+- a reproduced defect; or
+- recorded/live evidence showing that the current baseline is inadequate.
+
+Vision V1 freeze does not freeze System V1.
+
+System V1 development continues with:
+
+- GUI / HMI
+- hardware pan/tilt integration
+- PC -> ESP32 -> actuator integration
+- final system validation
+- report and demo preparation
+
 Update: 2026-09-29
 ## D022 — Vision perception failures fail to STOP
 Decision:

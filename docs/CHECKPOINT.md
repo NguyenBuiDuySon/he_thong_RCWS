@@ -1,4 +1,83 @@
 # CHECKPOINT
+# CHECKPOINT
+Update: 2026-10-01
+
+## Vision V1 — FROZEN
+
+Status: SOFTWARE COMPLETE
+
+### Pipeline đã chốt
+
+Camera
+-> Latest-frame capture
+-> YOLO
+-> ByteTrack
+-> Operator Target Selection
+-> TargetManager
+-> Smart Reacquire
+-> TargetObservation
+-> TrackingErrorFilter
+-> TrackingController
+-> Vision Pan/Tilt Command
+
+### Đã hoàn thiện
+
+- phát hiện đối tượng bằng YOLO
+- multi-object tracking bằng ByteTrack
+- operator chọn target bằng chuột
+- trạng thái IDLE / LOCKED / LOST
+- LastTargetMemory
+- Smart Reacquire
+- geometry gating
+- candidate scoring
+- ambiguity rejection
+- multi-frame confirmation
+- lost timeout
+- normalized target error
+- dead zone
+- error filtering
+- P tracking controller
+- failure -> OUTPUT STOP
+- telemetry thời gian thực
+- replay evaluation
+- human ground-truth evaluation
+- live robustness validation
+- performance acceptance
+- demo workflow stabilization
+
+### Frozen Smart Reacquire baseline
+
+- center distance norm: 1.0
+- scale ratio: 2.5
+- aspect-ratio ratio: 1.8
+- score margin: 0.10
+- confirmation: 2 frames
+- lost timeout: 90 frames
+
+### Performance checkpoint
+
+- camera: 30 FPS
+- live pipeline: 30 FPS
+- offline pipeline p95: 20.74 ms
+- offline pipeline p99: 25.51 ms
+
+### Giới hạn hiện tại
+
+- sau lost timeout, target chuyển về IDLE và operator phải chọn lại
+- ReID chưa được sử dụng
+- Manual ROI chưa thuộc Vision V1
+- physical pan/tilt còn chờ tích hợp phần cứng
+
+### Quyết định
+
+Vision V1 được freeze.
+
+Từ thời điểm này không thay đổi thuật toán Vision V1 nếu không có:
+
+- lỗi tái hiện được; hoặc
+- dữ liệu đánh giá mới chứng minh baseline hiện tại chưa phù hợp.
+
+System V1 vẫn tiếp tục phát triển GUI, hardware pan/tilt và final integration.
 Update: 2026-10-01
 ### VH5 — Demo Workflow Stabilization
 
