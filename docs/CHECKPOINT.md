@@ -1,5 +1,23 @@
 # CHECKPOINT
 Update: 2026-10-01
+### VH5 — Demo Workflow Stabilization
+
+Status: DONE
+
+Verified:
+
+- startup feedback
+- MANUAL_GAMEPAD startup mode
+- AUTO entry protection without active target
+- target selection feedback
+- MANUAL / AUTO mode switching
+- live Vision tracking and reacquire
+- return to manual control
+- target clear -> IDLE
+- Q / ESC safe exit -> OUTPUT STOP
+
+The complete demo workflow has been exercised repeatedly during
+Vision V1 hardening and Control V1 integration.
 ### VH4 — Performance / Latency Acceptance
 Status: DONE
 

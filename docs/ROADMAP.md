@@ -15,7 +15,7 @@ Update: 2026-10-01
 - [x] VH2 target selection / operator UX
 - [x] VH3 live tracking robustness
 - [x] VH4 performance / latency acceptance
-- [ ] VH5 demo workflow stabilization
+- [x] VH5 demo workflow stabilization
 - [ ] VH6 Vision V1 freeze
 
 Update: 2026-09-25

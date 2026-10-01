@@ -12,6 +12,7 @@ from app.control.gamepad_input import PygameGamepadInput
 from app.control.mode import (
     CommandArbiter,
     ControlMode,
+    can_enter_auto_vision,
 )
 from app.control.slew_rate_limiter import CommandSlewRateLimiter
 from app.control.tracking_controller import TrackingController
@@ -88,7 +89,6 @@ def main() -> None:
 
     detector = YoloDetector(config.detector)
 
-    warmup_packet = camera.read()
     target_manager = TargetManager(
         lost_timeout_frames=(config.targeting.lost_timeout_frames)
     )
@@ -128,7 +128,7 @@ def main() -> None:
     )
 
     mouse_input = MouseTargetInput()
-    operator_notice = OperatorNotice(duration_s=1.5)
+    operator_notice = OperatorNotice(duration_s=5.0)
     raw_output = build_command_output(config.output)
     output = CommandWatchdog(
         raw_output,
@@ -206,7 +206,7 @@ def main() -> None:
         config.display.window_name,
         mouse_input.callback,
     )
-
+    show_ready_notice = True
     stream.start()
 
     try:
@@ -222,6 +222,13 @@ def main() -> None:
                     print("VISION FAILSAFE: camera frame timeout -> OUTPUT STOP")
 
                 break
+            if show_ready_notice:
+                operator_notice.show(
+                    "SYSTEM READY",
+                    now_ns=packet.received_at_ns,
+                )
+                show_ready_notice = False
+
             batch, track_batch = process_perception_frame(
                 packet,
                 detector,
@@ -307,16 +314,31 @@ def main() -> None:
 
             elif mode_button.update(gamepad_state.mode_button_pressed):
                 if arbiter.mode is ControlMode.MANUAL_GAMEPAD:
-                    if raw_command.active:
+                    if can_enter_auto_vision(raw_command):
                         arbiter.set_mode(ControlMode.AUTO_VISION)
+
+                        operator_notice.show(
+                            "MODE: AUTO_VISION",
+                            now_ns=(packet.received_at_ns),
+                        )
 
                         print("\nCONTROL MODE -> auto_vision")
 
                     else:
+                        operator_notice.show(
+                            ("AUTO REJECTED: SELECT TARGET"),
+                            now_ns=(packet.received_at_ns),
+                        )
+
                         print("\nAUTO_VISION rejected: no active Vision target")
 
                 else:
                     arbiter.set_mode(ControlMode.MANUAL_GAMEPAD)
+
+                    operator_notice.show(
+                        "MODE: MANUAL_GAMEPAD",
+                        now_ns=(packet.received_at_ns),
+                    )
 
                     print("\nCONTROL MODE -> manual_gamepad")
 
@@ -503,6 +525,10 @@ def main() -> None:
                 ord("q"),
                 27,
             ):
+                output.stop()
+
+                print("\nSAFE EXIT -> OUTPUT STOP")
+
                 break
             if key == ord("c"):
                 target_manager.clear()
