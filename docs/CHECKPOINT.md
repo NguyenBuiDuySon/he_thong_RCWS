@@ -1,5 +1,67 @@
 # CHECKPOINT
-# CHECKPOINT
+Update: 2026-10-01
+### VH4 — Performance / Latency Acceptance
+Status: DONE
+
+Offline detector benchmark:
+
+- throughput: 64.86 FPS
+- realtime factor: 2.16x
+- inference mean: 9.64 ms
+- inference p95: 13.23 ms
+- detector total mean: 11.67 ms
+- detector total p95: 15.63 ms
+- detector total p99: 16.56 ms
+
+Offline full-pipeline benchmark:
+
+- detector mean: 12.08 ms
+- detector p95: 16.03 ms
+- tracker p95: 0.48 ms
+- pipeline mean: 16.49 ms
+- pipeline p95: 20.74 ms
+- pipeline p99: 25.51 ms
+
+Live acceptance:
+
+- camera FPS: 30.0
+- pipeline FPS: 30.0
+- observed drop rate: 0.04-0.13%
+- observed frame-age p95: 18.5-20.0 ms
+- observed detector-total p95: 17.2-18.1 ms
+- observed tracker p95: 0.33-0.60 ms
+
+Decision:
+
+Vision V1 meets the current 30 FPS software performance target.
+No model, resolution, or precision change is justified by the
+current performance measurements.
+Update: 2026-09-30
+### VH3 — Live Tracking Robustness
+
+Status: DONE
+
+Validated live scenarios:
+
+- stable single target
+- fast lateral movement
+- large scale change
+- partial occlusion
+- short full occlusion
+- two-person crossing
+- exit / re-entry
+
+Observed:
+
+- brief LOST states may occur near frame boundaries or heavy occlusion
+- correct reacquisition was observed after short disruptions
+- no wrong-person switch was observed in the two-person crossing test
+- long disappearance correctly reaches timeout and IDLE
+- no current live evidence justifies changing the frozen P2 reacquire baseline
+
+Decision:
+
+Keep the current Vision V1 tracking and reacquire baseline unchanged.
 Update: 2026-09-29
 ### VH2 — Target Selection / Operator UX
 
