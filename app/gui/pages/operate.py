@@ -1,6 +1,10 @@
 from __future__ import annotations
 
-from PySide6.QtCore import Qt, QThread
+from PySide6.QtCore import (
+    Qt,
+    QThread,
+    Slot,
+)
 from PySide6.QtWidgets import (
     QFrame,
     QHBoxLayout,
@@ -140,8 +144,10 @@ class OperatePage(QWidget):
             "videoPanel",
             True,
         )
-
         self.video_widget = VideoWidget()
+        self.video_widget.frame_clicked.connect(self._on_video_clicked)
+
+        self.video_widget.clear_requested.connect(self._on_clear_requested)
 
         layout = QVBoxLayout(frame)
         layout.setContentsMargins(
@@ -251,3 +257,17 @@ class OperatePage(QWidget):
 
         self._camera_worker = None
         self._camera_thread = None
+
+    @Slot(int, int)
+    def _on_video_clicked(
+        self,
+        x: int,
+        y: int,
+    ) -> None:
+        print(f"GUI SELECT REQUEST: x={x} y={y}")
+
+    @Slot()
+    def _on_clear_requested(
+        self,
+    ) -> None:
+        print("GUI CLEAR REQUEST")
