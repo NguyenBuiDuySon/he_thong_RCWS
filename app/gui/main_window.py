@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from PySide6.QtCore import Qt
+from PySide6.QtGui import QCloseEvent
 from PySide6.QtWidgets import (
     QButtonGroup,
     QHBoxLayout,
@@ -12,6 +13,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from app.config import AppConfig
 from app.gui.pages.operate import OperatePage
 
 
@@ -38,7 +40,10 @@ class PlaceholderPage(QWidget):
 
 
 class MainWindow(QMainWindow):
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        config: AppConfig,
+    ) -> None:
         super().__init__()
 
         self._nav_group = QButtonGroup(self)
@@ -50,13 +55,9 @@ class MainWindow(QMainWindow):
 
         self._pages = QStackedWidget()
 
-        self._pages.addWidget(OperatePage())
-        self._pages.addWidget(
-            PlaceholderPage(
-                "DIAGNOSTICS",
-                "Telemetry, trạng thái và chẩn đoán hệ thống",
-            )
-        )
+        self._operate_page = OperatePage(config.camera)
+
+        self._pages.addWidget(self._operate_page)
         self._pages.addWidget(
             PlaceholderPage(
                 "SETUP",
@@ -259,3 +260,11 @@ class MainWindow(QMainWindow):
         }
             """
         )
+
+    def closeEvent(
+        self,
+        event: QCloseEvent,
+    ) -> None:
+        self._operate_page.stop_camera_preview()
+
+        super().closeEvent(event)

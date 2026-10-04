@@ -1,12 +1,18 @@
 from __future__ import annotations
 
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QThread
 from PySide6.QtWidgets import (
     QFrame,
     QHBoxLayout,
     QLabel,
     QVBoxLayout,
     QWidget,
+)
+
+from app.config import CameraConfig
+from app.gui.widgets.video import VideoWidget
+from app.gui.workers.camera_preview import (
+    CameraPreviewWorker,
 )
 
 
@@ -59,11 +65,24 @@ class MetricCard(QFrame):
 
 
 class OperatePage(QWidget):
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        camera_config: CameraConfig,
+    ) -> None:
         super().__init__()
 
+        self._camera_config = camera_config
+
+        self._camera_thread: QThread | None = None
+        self._camera_worker: CameraPreviewWorker | None = None
+
         root = QVBoxLayout(self)
-        root.setContentsMargins(28, 24, 28, 24)
+        root.setContentsMargins(
+            28,
+            24,
+            28,
+            24,
+        )
         root.setSpacing(18)
 
         header = self._build_header()
@@ -73,6 +92,10 @@ class OperatePage(QWidget):
         root.addLayout(header)
         root.addLayout(content, 1)
         root.addLayout(telemetry)
+
+        # PHẢI nằm cuối cùng
+        # vì _build_content() mới tạo self.video_widget
+        self._start_camera_preview()
 
     def _build_header(self) -> QHBoxLayout:
         layout = QHBoxLayout()
@@ -113,20 +136,22 @@ class OperatePage(QWidget):
 
     def _build_video_panel(self) -> QFrame:
         frame = QFrame()
-        frame.setProperty("videoPanel", True)
-
-        self.video_label = QLabel("CAMERA PREVIEW\nRuntime chưa được kết nối")
-
-        self.video_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.video_label.setProperty(
-            "videoPlaceholder",
+        frame.setProperty(
+            "videoPanel",
             True,
         )
 
-        layout = QVBoxLayout(frame)
-        layout.setContentsMargins(8, 8, 8, 8)
+        self.video_widget = VideoWidget()
 
-        layout.addWidget(self.video_label)
+        layout = QVBoxLayout(frame)
+        layout.setContentsMargins(
+            8,
+            8,
+            8,
+            8,
+        )
+
+        layout.addWidget(self.video_widget)
 
         return frame
 
@@ -190,3 +215,39 @@ class OperatePage(QWidget):
             layout.addWidget(card)
 
         return layout
+
+    def _start_camera_preview(self) -> None:
+        self._camera_thread = QThread(self)
+
+        self._camera_worker = CameraPreviewWorker(self._camera_config)
+
+        self._camera_worker.moveToThread(self._camera_thread)
+
+        self._camera_thread.started.connect(self._camera_worker.run)
+
+        self._camera_worker.frame_ready.connect(self.video_widget.set_frame)
+
+        self._camera_worker.error.connect(self._on_camera_error)
+
+        self._camera_worker.finished.connect(self._camera_thread.quit)
+
+        self._camera_thread.start()
+
+    def _on_camera_error(
+        self,
+        message: str,
+    ) -> None:
+        self.video_widget.setText(f"CAMERA ERROR\n{message}")
+
+        self.system_card.value_label.setText("CAMERA ERROR")
+
+    def stop_camera_preview(self) -> None:
+        if self._camera_worker is not None:
+            self._camera_worker.request_stop()
+
+        if self._camera_thread is not None:
+            self._camera_thread.quit()
+            self._camera_thread.wait(2000)
+
+        self._camera_worker = None
+        self._camera_thread = None

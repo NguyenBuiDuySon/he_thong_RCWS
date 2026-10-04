@@ -4,13 +4,16 @@ import sys
 
 from PySide6.QtWidgets import QApplication
 
+from app.config import load_config
 from app.gui.main_window import MainWindow
 
 
 def main() -> int:
     app = QApplication(sys.argv)
 
-    window = MainWindow()
+    config = load_config("configs/default.yaml")
+
+    window = MainWindow(config)
     window.show()
 
     return app.exec()
