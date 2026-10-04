@@ -12,6 +12,8 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from app.gui.pages.operate import OperatePage
+
 
 class PlaceholderPage(QWidget):
     def __init__(
@@ -39,20 +41,16 @@ class MainWindow(QMainWindow):
     def __init__(self) -> None:
         super().__init__()
 
-        self.setWindowTitle(
-            "Multi-Sensor Tracking Platform — System V1"
-        )
+        self._nav_group = QButtonGroup(self)
+        self._nav_group.setExclusive(True)
+
+        self.setWindowTitle("Multi-Sensor Tracking Platform — System V1")
         self.resize(1440, 900)
         self.setMinimumSize(1100, 700)
 
         self._pages = QStackedWidget()
 
-        self._pages.addWidget(
-            PlaceholderPage(
-                "OPERATE",
-                "Vận hành và theo dõi mục tiêu",
-            )
-        )
+        self._pages.addWidget(OperatePage())
         self._pages.addWidget(
             PlaceholderPage(
                 "DIAGNOSTICS",
@@ -123,14 +121,10 @@ class MainWindow(QMainWindow):
             if index == 0:
                 button.setChecked(True)
 
-            button.clicked.connect(
-                lambda checked, page=index: (
-                    self._pages.setCurrentIndex(page)
-                )
-            )
-
             group.addButton(button)
             layout.addWidget(button)
+
+        self._nav_group.idClicked.connect(self._pages.setCurrentIndex)
 
         layout.addStretch()
 
@@ -206,5 +200,62 @@ class MainWindow(QMainWindow):
                 border: 1px solid #2ccf9c;
                 color: #53f0c0;
             }
+
+            QFrame[videoPanel="true"] {
+            background-color: #050c12;
+            border: 1px solid #1f3d4d;
+            border-radius: 10px;
+        }
+
+        QLabel[videoPlaceholder="true"] {
+            color: #486473;
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        QFrame[statusCard="true"] {
+            background-color: #0d1c26;
+            border: 1px solid #1c3848;
+            border-radius: 8px;
+        }
+
+        QLabel[cardTitle="true"] {
+            color: #7793a3;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        QLabel[cardValue="true"] {
+            color: #53f0c0;
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        QFrame[metricCard="true"] {
+            background-color: #0d1c26;
+            border: 1px solid #1c3848;
+            border-radius: 8px;
+        }
+
+        QLabel[metricTitle="true"] {
+            color: #7793a3;
+            font-size: 10px;
+            font-weight: 600;
+        }
+
+        QLabel[metricValue="true"] {
+            color: #d8e7f0;
+            font-size: 16px;
+            font-weight: 700;
+        }
+
+        QLabel[systemBadge="true"] {
+            background-color: #10372f;
+            border: 1px solid #2ccf9c;
+            border-radius: 6px;
+            color: #53f0c0;
+            font-weight: 700;
+            padding: 8px 16px;
+        }
             """
         )
