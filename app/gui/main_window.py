@@ -55,7 +55,7 @@ class MainWindow(QMainWindow):
 
         self._pages = QStackedWidget()
 
-        self._operate_page = OperatePage(config.camera)
+        self._operate_page = OperatePage(config)
 
         self._pages.addWidget(self._operate_page)
         self._pages.addWidget(
@@ -265,6 +265,6 @@ class MainWindow(QMainWindow):
         self,
         event: QCloseEvent,
     ) -> None:
-        self._operate_page.stop_camera_preview()
+        self._operate_page.stop_runtime()
 
         super().closeEvent(event)
