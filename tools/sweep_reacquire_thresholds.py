@@ -36,6 +36,7 @@ def parse_args() -> argparse.Namespace:
 
     return parser.parse_args()
 
+
 def run_command(
     command: list[str],
 ) -> None:
@@ -60,9 +61,7 @@ def main() -> None:
 
     if args.split != "all":
         scenarios = [
-            scenario
-            for scenario in scenarios
-            if scenario["split"] == args.split
+            scenario for scenario in scenarios if scenario["split"] == args.split
         ]
 
     if not scenarios:

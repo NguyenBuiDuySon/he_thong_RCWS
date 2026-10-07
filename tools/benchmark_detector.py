@@ -9,6 +9,7 @@ from pathlib import Path
 from time import perf_counter, perf_counter_ns
 
 import cv2
+import numpy as np
 import torch
 import ultralytics
 
@@ -58,7 +59,7 @@ def parse_args() -> argparse.Namespace:
 
 def warmup_detector(
     detector: YoloDetector,
-    frame,
+    frame: np.ndarray,
     iterations: int,
 ) -> None:
     print(f"Warm-up: {iterations} iterations")
@@ -191,7 +192,7 @@ def main() -> None:
     if torch.cuda.is_available():
         gpu_name = torch.cuda.get_device_name(0)
 
-    result = {
+    result: dict[str, object] = {
         "timestamp": datetime.now(UTC).isoformat(),
         "environment": {
             "python": sys.version.split()[0],
