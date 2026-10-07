@@ -14,6 +14,9 @@ from PySide6.QtWidgets import (
 )
 
 from app.config import AppConfig
+from app.gui.pages.diagnostics import (
+    DiagnosticsPage,
+)
 from app.gui.pages.operate import OperatePage
 
 
@@ -57,7 +60,16 @@ class MainWindow(QMainWindow):
 
         self._operate_page = OperatePage(config)
 
+        self._diagnostics_page = DiagnosticsPage()
+
+        self._operate_page.snapshot_updated.connect(
+            self._diagnostics_page.apply_snapshot
+        )
+
+        self._operate_page.runtime_event.connect(self._diagnostics_page.add_event)
+
         self._pages.addWidget(self._operate_page)
+        self._pages.addWidget(self._diagnostics_page)
         self._pages.addWidget(
             PlaceholderPage(
                 "SETUP",
@@ -104,9 +116,6 @@ class MainWindow(QMainWindow):
         layout.addWidget(app_subtitle)
         layout.addSpacing(28)
 
-        group = QButtonGroup(self)
-        group.setExclusive(True)
-
         buttons = (
             ("OPERATE", 0),
             ("DIAGNOSTICS", 1),
@@ -122,7 +131,10 @@ class MainWindow(QMainWindow):
             if index == 0:
                 button.setChecked(True)
 
-            group.addButton(button)
+            self._nav_group.addButton(
+                button,
+                index,
+            )
             layout.addWidget(button)
 
         self._nav_group.idClicked.connect(self._pages.setCurrentIndex)
@@ -257,6 +269,39 @@ class MainWindow(QMainWindow):
             color: #53f0c0;
             font-weight: 700;
             padding: 8px 16px;
+        }
+
+        QFrame[diagSection="true"] {
+            background-color: #0d1c26;
+            border: 1px solid #1c3848;
+            border-radius: 9px;
+        }
+
+        QLabel[diagSectionTitle="true"] {
+            color: #53f0c0;
+            font-size: 15px;
+            font-weight: 700;
+        }
+
+        QLabel[diagKey="true"] {
+            color: #7892a1;
+            font-size: 12px;
+        }
+
+        QLabel[diagValue="true"] {
+            color: #d8e7f0;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        QPlainTextEdit#eventLog {
+            background-color: #071119;
+            border: 1px solid #183342;
+            border-radius: 6px;
+            color: #9fb8c7;
+            font-family: "Cascadia Mono";
+            font-size: 12px;
+            padding: 8px;
         }
             """
         )

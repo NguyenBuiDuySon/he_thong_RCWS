@@ -3,6 +3,7 @@ from __future__ import annotations
 from PySide6.QtCore import (
     Qt,
     QThread,
+    Signal,
     Slot,
 )
 from PySide6.QtWidgets import (
@@ -72,6 +73,9 @@ class MetricCard(QFrame):
 
 
 class OperatePage(QWidget):
+    snapshot_updated = Signal(object)
+    runtime_event = Signal(str)
+
     def __init__(
         self,
         config: AppConfig,
@@ -304,6 +308,7 @@ class OperatePage(QWidget):
         )
 
         self.system_card.value_label.setText(display_text)
+        self.runtime_event.emit(message)
 
     @Slot(str)
     def _on_runtime_error(
@@ -311,7 +316,7 @@ class OperatePage(QWidget):
         message: str,
     ) -> None:
         self.system_card.value_label.setText("ERROR")
-
+        self.runtime_event.emit(f"ERROR: {message}")
         print(f"GUI RUNTIME ERROR: {message}")
 
     def apply_snapshot(
@@ -341,3 +346,5 @@ class OperatePage(QWidget):
         self.gamepad.value_label.setText("ON" if snapshot.gamepad_connected else "OFF")
 
         self.output.value_label.setText(snapshot.output_mode.upper())
+
+        self.snapshot_updated.emit(snapshot)

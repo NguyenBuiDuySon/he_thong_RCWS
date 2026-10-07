@@ -28,7 +28,27 @@ class RuntimeSnapshot:
 
     camera_fps: float
     pipeline_fps: float
+
+    model_inference_ms: float
+    model_inference_p95_ms: float
+
+    detector_total_ms: float
+    detector_total_p95_ms: float
+
+    tracking_ms: float
+    tracking_p95_ms: float
+
+    frame_age_ms: float
     frame_age_p95_ms: float
+
+    detection_count: int
+    track_count: int
+
+    target_class: str | None
+    target_confidence: float | None
+    target_bbox: tuple[float, float, float, float] | None
+    target_center: tuple[float, float] | None
+    target_missing_frames: int
 
     gamepad_connected: bool
 

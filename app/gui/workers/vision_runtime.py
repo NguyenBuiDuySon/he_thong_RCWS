@@ -365,17 +365,60 @@ class VisionRuntimeWorker(QObject):
                     else SearchState.INACTIVE
                 )
 
+                target_track = target.track
+                target_class = (
+                    target_track.class_name if target_track is not None else None
+                )
+
+                target_confidence = (
+                    target_track.confidence if target_track is not None else None
+                )
+
+                target_bbox = (
+                    (
+                        target_track.x1,
+                        target_track.y1,
+                        target_track.x2,
+                        target_track.y2,
+                    )
+                    if target_track is not None
+                    else None
+                )
+
+                target_center = (
+                    (
+                        target_track.center_x,
+                        target_track.center_y,
+                    )
+                    if target_track is not None
+                    else None
+                )
+
                 snapshot = RuntimeSnapshot(
                     frame_id=packet.frame_id,
                     control_mode=arbiter.mode,
-                    target_status=(target.status),
-                    target_id=(target.selected_track_id),
+                    target_status=target.status,
+                    target_id=target.selected_track_id,
                     search_state=search_state,
-                    camera_fps=(stream.stats.captured_fps),
-                    pipeline_fps=(telemetry.pipeline_fps),
+                    camera_fps=stream.stats.captured_fps,
+                    pipeline_fps=telemetry.pipeline_fps,
+                    model_inference_ms=(telemetry.model_inference_ms),
+                    model_inference_p95_ms=(telemetry.model_inference_p95_ms),
+                    detector_total_ms=(telemetry.detector_total_ms),
+                    detector_total_p95_ms=(telemetry.detector_total_p95_ms),
+                    tracking_ms=(telemetry.tracking_ms),
+                    tracking_p95_ms=(telemetry.tracking_p95_ms),
+                    frame_age_ms=(telemetry.frame_age_ms),
                     frame_age_p95_ms=(telemetry.frame_age_p95_ms),
-                    gamepad_connected=gamepad_state.connected,
-                    output_mode=self._config.output.mode,
+                    detection_count=len(batch.detections),
+                    track_count=len(track_batch.tracks),
+                    target_class=target_class,
+                    target_confidence=target_confidence,
+                    target_bbox=target_bbox,
+                    target_center=target_center,
+                    target_missing_frames=(target.missing_frames),
+                    gamepad_connected=(gamepad_state.connected),
+                    output_mode=(self._config.output.mode),
                     pan_command=command.pan_norm,
                     tilt_command=command.tilt_norm,
                 )
