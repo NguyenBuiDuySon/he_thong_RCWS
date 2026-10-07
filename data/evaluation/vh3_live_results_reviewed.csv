@@ -1,0 +1,8 @@
+scenario_id,scenario,expected_behavior,lost_observed,reacquire_observed,wrong_target_switch,timeout_observed,result,notes
+live1,stable_single_target,remain locked,yes,yes,no,no,pass,"Brief LOST near frame edge around 50.6 s; correct new-ID reacquire ID 0 -> 1 to the same person around 50.9 s."
+live2,fast_lateral_motion,remain locked or brief lost with recovery,yes,yes,no,yes,pass,"Fast lateral/edge movement preserved the same person through reacquire; later full/long exit caused expected timeout to IDLE, so this clip also contains exit/re-enter behavior."
+live3,scale_change,track through approach and retreat,no,no,no,no,pass,"Tracking remained locked across large near/far scale changes in the reviewed sequence."
+live4,partial_occlusion,remain locked or brief lost with recovery,no,no,no,no,pass,"Chair partially occluded the target while tracking remained locked in the reviewed sequence."
+live5,short_full_occlusion,enter lost then reacquire same target,yes,yes,no,yes,pass,"At about 26 s target ID 17 was LOST (miss 54), then recovered as the same ID 17 by about 30 s. Later repeated/longer hiding produced additional LOST/timeout behavior."
+live6,two_person_crossing,avoid wrong-person switch,no,no,no,yes,pass,"Selected target ID 14 remained locked while same-class distractor IDs 21/27/29 crossed and overlapped. No wrong-person switch observed; later timeout occurred after the selected target left."
+live7,exit_reenter,enter lost then reacquire or timeout according to disappearance length,yes,yes,no,yes,pass,"Short exit/re-entry correctly reacquired the same person with new tracker ID 4 -> 6. A later long absence reached LOST (miss 80) and timed out to IDLE as designed."
