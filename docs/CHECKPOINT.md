@@ -1,5 +1,23 @@
 # CHECKPOINT
-# CHECKPOINT
+
+## GUI G4 — Diagnostics acceptance
+Update: 2026-10-07
+Status: DONE
+
+Verified live:
+- performance telemetry
+- target telemetry
+- full MANUAL/AUTO control path
+- event transition logging
+- LOST -> REACQUIRED
+- LOST -> TIMEOUT -> IDLE
+
+Runtime remained near 30 FPS during validation.
+
+Known UX issue:
+rapid LOST/REACQUIRED transitions may make the Event Log noisy.
+Defer coalescing to GUI polish.
+
 Update: 2026-10-01
 
 ## Vision V1 — FROZEN

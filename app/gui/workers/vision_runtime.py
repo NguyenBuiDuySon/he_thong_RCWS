@@ -102,17 +102,21 @@ class VisionRuntimeWorker(QObject):
         *,
         track_batch: TrackBatch,
         target_manager: TargetManager,
-    ) -> None:
+    ) -> bool:
+        cleared_by_operator = False
+
         while True:
             try:
                 action, x, y = self._requests.get_nowait()
             except Empty:
-                return
+                return cleared_by_operator
 
             if action == "clear":
                 target_manager.clear()
 
                 self.notice.emit("TARGET CLEARED")
+
+                cleared_by_operator = True
                 continue
 
             if action == "select" and x is not None and y is not None:
@@ -258,6 +262,10 @@ class VisionRuntimeWorker(QObject):
 
             self.notice.emit("SYSTEM READY")
 
+            previous_target_status: TargetStatus = TargetStatus.IDLE
+
+            previous_target_id: int | None = None
+
             while not self._stop_event.is_set():
                 packet = stream.read(timeout=1.0)
 
@@ -272,12 +280,40 @@ class VisionRuntimeWorker(QObject):
                     on_failure=output.stop,
                 )
 
-                self._process_requests(
+                cleared_by_operator = self._process_requests(
                     track_batch=track_batch,
                     target_manager=target_manager,
                 )
 
                 target = target_manager.update(track_batch)
+
+                if (
+                    previous_target_status is TargetStatus.LOCKED
+                    and target.status is TargetStatus.LOST
+                ):
+                    self.notice.emit(f"TARGET LOST | ID {previous_target_id}")
+
+                elif (
+                    previous_target_status is TargetStatus.LOST
+                    and target.status is TargetStatus.LOCKED
+                ):
+                    if previous_target_id == target.selected_track_id:
+                        self.notice.emit(
+                            f"TARGET REACQUIRED | ID {target.selected_track_id}"
+                        )
+                    else:
+                        self.notice.emit(
+                            "TARGET REACQUIRED | "
+                            f"ID {previous_target_id} "
+                            f"-> {target.selected_track_id}"
+                        )
+
+                elif (
+                    previous_target_status is TargetStatus.LOST
+                    and target.status is TargetStatus.IDLE
+                    and not cleared_by_operator
+                ):
+                    self.notice.emit("TARGET TIMEOUT -> IDLE")
 
                 frame_height, frame_width = packet.image.shape[:2]
 
@@ -434,6 +470,13 @@ class VisionRuntimeWorker(QObject):
                 self.frame_ready.emit(self._to_qimage(packet.image))
 
                 self.snapshot_ready.emit(snapshot)
+                previous_target_status = target.status
+
+                if target.selected_track_id is not None:
+                    previous_target_id = target.selected_track_id
+
+                elif target.status is TargetStatus.IDLE:
+                    previous_target_id = None
 
         except Exception as exc:  # noqa: BLE001
             self.error.emit(str(exc))

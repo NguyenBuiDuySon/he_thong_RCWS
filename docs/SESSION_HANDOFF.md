@@ -334,77 +334,67 @@ RB
 
 ---
 
-## 9. DIAGNOSTICS current state
+## 9. DIAGNOSTICS status
 
-G4A
-DONE
+G4 — DONE
 
-Diagnostics page is connected to RuntimeSnapshot.
+### G4A
+- Diagnostics page connected to RuntimeSnapshot
+- live Performance / Target / Control / Output data
+- Event Log connected to runtime events
 
-Current sections:
-
-PERFORMANCE
-TARGET
-CONTROL / OUTPUT
-EVENT LOG
-
-Navigation index bug has been fixed:
-
-0 OPERATE
-1 DIAGNOSTICS
-2 SETUP
-3 TUNING
-
-G4B.1
-IMPLEMENTED / LIVE CHECK COMPLETED
-
-Performance fields:
-
+### G4B.1
+Performance diagnostics:
 - Camera FPS
 - Pipeline FPS
-- Frame Age P95
+- Frame Age / P95
 - Frame ID
-- Detections
-- Tracks
-- Inference
-- Inference P95
-- Detector Total
-- Detector P95
-- Tracker
-- Tracker P95
-- Frame Age
+- Detection count
+- Track count
+- Inference / P95
+- Detector total / P95
+- Tracker / P95
 
-Target fields:
+Target diagnostics:
+- status
+- target ID
+- search state
+- class
+- confidence
+- bounding box
+- center
+- missing frames
 
-- Status
-- Target ID
-- Search State
-- Class
-- Confidence
-- Bounding Box
-- Center
-- Missing Frames
+### G4B.2
+Control diagnostics:
+- gamepad connection
+- raw pan / tilt axes
+- manual command
+- Vision command
+- selected/arbitrated command
+- final slew-limited command
+- output mode
 
-Control fields currently:
+Verified:
+- MANUAL_GAMEPAD selects manual command
+- AUTO_VISION selects Vision command
+- final command reflects slew-limited selected command
 
-- Control Mode
-- Gamepad
-- Pan Command
-- Tilt Command
-- Output Mode
+### G4C
+Runtime transition events implemented:
+- TARGET LOST
+- TARGET REACQUIRED
+- reacquire with changed track ID
+- TARGET TIMEOUT -> IDLE
+- TARGET CLEARED remains distinct from timeout
 
-Event log receives runtime events such as:
+Observed limitation:
+rapid tracker loss/reacquisition can create a noisy Event Log.
+This is diagnostic evidence of real state transitions, not duplicate
+event emission. Event coalescing is deferred to final GUI polish.
 
-SYSTEM READY
-SELECTED ID ...
-SELECT MISS
-TARGET CLEARED
-MODE: AUTO_VISION
-MODE: MANUAL_GAMEPAD
-AUTO REJECTED: SELECT TARGET
-runtime errors
-
----
+Immediate next step:
+G5 — SETUP page
 
 ## 10. Immediate GUI next step
 
