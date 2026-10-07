@@ -236,14 +236,57 @@ class DiagnosticsPage(QWidget):
             "gamepad",
             "Gamepad",
         )
+
+        self.control.add_metric(
+            "gamepad_pan_axis",
+            "Gamepad Pan Axis",
+        )
+
+        self.control.add_metric(
+            "gamepad_tilt_axis",
+            "Gamepad Tilt Axis",
+        )
+
+        self.control.add_metric(
+            "manual_pan",
+            "Manual Pan",
+        )
+
+        self.control.add_metric(
+            "manual_tilt",
+            "Manual Tilt",
+        )
+
+        self.control.add_metric(
+            "vision_pan",
+            "Vision Pan",
+        )
+
+        self.control.add_metric(
+            "vision_tilt",
+            "Vision Tilt",
+        )
+
+        self.control.add_metric(
+            "selected_pan",
+            "Selected Pan",
+        )
+
+        self.control.add_metric(
+            "selected_tilt",
+            "Selected Tilt",
+        )
+
         self.control.add_metric(
             "pan",
-            "Pan Command",
+            "Final Pan",
         )
+
         self.control.add_metric(
             "tilt",
-            "Tilt Command",
+            "Final Tilt",
         )
+
         self.control.add_metric(
             "output",
             "Output Mode",
@@ -437,6 +480,46 @@ class DiagnosticsPage(QWidget):
         self.control.set_value(
             "gamepad",
             ("CONNECTED" if snapshot.gamepad_connected else "DISCONNECTED"),
+        )
+
+        self.control.set_value(
+            "gamepad_pan_axis",
+            f"{snapshot.gamepad_pan_axis:+.3f}",
+        )
+
+        self.control.set_value(
+            "gamepad_tilt_axis",
+            f"{snapshot.gamepad_tilt_axis:+.3f}",
+        )
+
+        self.control.set_value(
+            "manual_pan",
+            f"{snapshot.manual_pan_command:+.3f}",
+        )
+
+        self.control.set_value(
+            "manual_tilt",
+            f"{snapshot.manual_tilt_command:+.3f}",
+        )
+
+        self.control.set_value(
+            "vision_pan",
+            f"{snapshot.vision_pan_command:+.3f}",
+        )
+
+        self.control.set_value(
+            "vision_tilt",
+            f"{snapshot.vision_tilt_command:+.3f}",
+        )
+
+        self.control.set_value(
+            "selected_pan",
+            f"{snapshot.selected_pan_command:+.3f}",
+        )
+
+        self.control.set_value(
+            "selected_tilt",
+            f"{snapshot.selected_tilt_command:+.3f}",
         )
 
         self.control.set_value(

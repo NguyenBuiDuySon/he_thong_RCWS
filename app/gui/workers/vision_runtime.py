@@ -418,9 +418,17 @@ class VisionRuntimeWorker(QObject):
                     target_center=target_center,
                     target_missing_frames=(target.missing_frames),
                     gamepad_connected=(gamepad_state.connected),
+                    gamepad_pan_axis=(gamepad_state.pan_axis),
+                    gamepad_tilt_axis=(gamepad_state.tilt_axis),
+                    manual_pan_command=(manual_command.pan_norm),
+                    manual_tilt_command=(manual_command.tilt_norm),
+                    vision_pan_command=(vision_command.pan_norm),
+                    vision_tilt_command=(vision_command.tilt_norm),
+                    selected_pan_command=(selected_command.pan_norm),
+                    selected_tilt_command=(selected_command.tilt_norm),
                     output_mode=(self._config.output.mode),
-                    pan_command=command.pan_norm,
-                    tilt_command=command.tilt_norm,
+                    pan_command=(command.pan_norm),
+                    tilt_command=(command.tilt_norm),
                 )
 
                 self.frame_ready.emit(self._to_qimage(packet.image))

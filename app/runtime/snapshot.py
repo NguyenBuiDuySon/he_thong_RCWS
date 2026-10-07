@@ -51,6 +51,17 @@ class RuntimeSnapshot:
     target_missing_frames: int
 
     gamepad_connected: bool
+    gamepad_pan_axis: float
+    gamepad_tilt_axis: float
+
+    manual_pan_command: float
+    manual_tilt_command: float
+
+    vision_pan_command: float
+    vision_tilt_command: float
+
+    selected_pan_command: float
+    selected_tilt_command: float
 
     output_mode: str
 
