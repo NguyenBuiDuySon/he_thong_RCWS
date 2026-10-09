@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import sys
 
+from PySide6.QtCore import QTimer
 from PySide6.QtWidgets import QApplication
 
 from app.config import load_config
@@ -15,6 +16,11 @@ def main() -> int:
 
     window = MainWindow(config)
     window.show()
+
+    QTimer.singleShot(
+        250,
+        window.start_runtime,
+    )
 
     return app.exec()
 

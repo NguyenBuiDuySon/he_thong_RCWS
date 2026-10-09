@@ -1,4 +1,83 @@
 # PROJECT SESSION HANDOFF
+Updated: 2026-10-09
+## GUI — DIAGNOSTICS V2
+
+Status: ACCEPTED FOR V1
+
+Layout:
+- 2 rows x 3 functional blocks
+- PERFORMANCE
+- TARGET
+- CONTROL
+- INPUT
+- OUTPUT
+- EVENTS
+
+Design goals:
+- clear information hierarchy
+- compact but readable values
+- no decorative information
+- runtime truth only
+- separate input, arbitration, and final output paths
+
+Verified live:
+- camera/pipeline performance telemetry
+- detector/tracker/frame-age current and P95
+- target state / target ID / search state
+- Vision command
+- selected command
+- final command
+- gamepad raw input
+- manual command
+- output mode
+- runtime event logging
+
+Decision:
+Diagnostics V2 is sufficient for System V1.
+Further visual polish is deferred.
+
+## GUI — OPERATE V2
+
+Status: ACCEPTED FOR V1
+
+Design priority:
+- correctness over decoration
+- operational readability
+- real runtime data only
+- large, readable status values
+- minimal visual clutter
+- preserve camera workspace
+
+Current OPERATE displays:
+- live Vision frame
+- detector/tracker overlay
+- selected target
+- system state
+- control mode
+- target state / ID
+- search state
+- final pan / tilt command
+- camera FPS
+- pipeline FPS
+- frame-age P95
+- gamepad state
+- output mode
+
+Startup:
+- GUI visible in approximately 0.6–1.0 s after deferred runtime startup changes
+- Vision/runtime initializes after the GUI is already visible
+
+Decision:
+OPERATE UI is sufficient for System V1.
+Further visual enhancement is deferred to later versions.
+
+Primary V1 priorities remain:
+1. algorithm correctness
+2. tracking/reacquisition accuracy
+3. control stability
+4. failsafe behavior
+5. correct operator information
+6. UI aesthetics
 
 Updated: 2026-10-07
 

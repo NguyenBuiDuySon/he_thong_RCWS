@@ -1,12 +1,15 @@
 from __future__ import annotations
 
-from PySide6.QtCore import QDateTime
+from PySide6.QtCore import (
+    QDateTime,
+    Qt,
+)
 from PySide6.QtWidgets import (
     QFrame,
     QGridLayout,
-    QHBoxLayout,
     QLabel,
     QPlainTextEdit,
+    QPushButton,
     QVBoxLayout,
     QWidget,
 )
@@ -18,6 +21,8 @@ class DiagnosticSection(QFrame):
     def __init__(
         self,
         title: str,
+        *,
+        metric_columns: int = 1,
     ) -> None:
         super().__init__()
 
@@ -26,15 +31,22 @@ class DiagnosticSection(QFrame):
             True,
         )
 
+        self._metric_columns = max(
+            1,
+            metric_columns,
+        )
+
+        self._metric_count = 0
+
         self._grid = QGridLayout(self)
         self._grid.setContentsMargins(
-            18,
-            16,
-            18,
-            16,
+            14,
+            12,
+            14,
+            12,
         )
-        self._grid.setHorizontalSpacing(24)
-        self._grid.setVerticalSpacing(10)
+        self._grid.setHorizontalSpacing(18)
+        self._grid.setVerticalSpacing(5)
 
         title_label = QLabel(title)
         title_label.setProperty(
@@ -47,11 +59,27 @@ class DiagnosticSection(QFrame):
             0,
             0,
             1,
-            2,
+            self._metric_columns * 2,
         )
 
-        self._next_row = 1
-        self._values: dict[str, QLabel] = {}
+        for column in range(self._metric_columns):
+            key_column = column * 2
+            value_column = key_column + 1
+
+            self._grid.setColumnStretch(
+                key_column,
+                1,
+            )
+
+            self._grid.setColumnStretch(
+                value_column,
+                1,
+            )
+
+        self._values: dict[
+            str,
+            QLabel,
+        ] = {}
 
     def add_metric(
         self,
@@ -59,32 +87,49 @@ class DiagnosticSection(QFrame):
         label: str,
         value: str = "--",
     ) -> None:
+        metric_index = self._metric_count
+
+        column_group = metric_index % self._metric_columns
+
+        row = (metric_index // self._metric_columns) + 1
+
+        key_column = column_group * 2
+
+        value_column = key_column + 1
+
         name_label = QLabel(label)
         name_label.setProperty(
             "diagKey",
             True,
         )
+        name_label.setMinimumHeight(25)
 
         value_label = QLabel(value)
         value_label.setProperty(
             "diagValue",
             True,
         )
+        value_label.setMinimumHeight(25)
+
+        value_label.setAlignment(
+            Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
+        )
 
         self._grid.addWidget(
             name_label,
-            self._next_row,
-            0,
+            row,
+            key_column,
         )
 
         self._grid.addWidget(
             value_label,
-            self._next_row,
-            1,
+            row,
+            value_column,
         )
 
         self._values[key] = value_label
-        self._next_row += 1
+
+        self._metric_count += 1
 
     def set_value(
         self,
@@ -100,15 +145,17 @@ class DiagnosticSection(QFrame):
 class DiagnosticsPage(QWidget):
     def __init__(self) -> None:
         super().__init__()
-
+        # =====================================================
+        # ROOT
+        # =====================================================
         root = QVBoxLayout(self)
         root.setContentsMargins(
-            28,
-            24,
-            28,
-            24,
+            18,
+            16,
+            18,
+            16,
         )
-        root.setSpacing(18)
+        root.setSpacing(12)
 
         title = QLabel("DIAGNOSTICS")
         title.setObjectName("pageTitle")
@@ -119,83 +166,70 @@ class DiagnosticsPage(QWidget):
         root.addWidget(title)
         root.addWidget(subtitle)
 
-        top = QHBoxLayout()
-        top.setSpacing(14)
+        # =====================================================
+        # MAIN DASHBOARD
+        # 2 rows x 3 columns
+        # =====================================================
+        dashboard = QGridLayout()
 
+        dashboard.setHorizontalSpacing(10)
+        dashboard.setVerticalSpacing(10)
+
+        # =====================================================
+        # 1. PERFORMANCE
+        # =====================================================
         self.performance = DiagnosticSection("PERFORMANCE")
 
         self.performance.add_metric(
             "camera_fps",
             "Camera FPS",
         )
+
         self.performance.add_metric(
             "pipeline_fps",
             "Pipeline FPS",
         )
-        self.performance.add_metric(
-            "frame_age",
-            "Frame Age P95",
-        )
-        self.performance.add_metric(
-            "frame_id",
-            "Frame ID",
-        )
 
         self.performance.add_metric(
-            "detections",
-            "Detections",
-        )
-
-        self.performance.add_metric(
-            "tracks",
-            "Tracks",
+            "objects",
+            "Detections / Tracks",
         )
 
         self.performance.add_metric(
             "inference",
-            "Inference",
-        )
-
-        self.performance.add_metric(
-            "inference_p95",
-            "Inference P95",
+            "Inference cur / p95",
         )
 
         self.performance.add_metric(
             "detector",
-            "Detector Total",
-        )
-
-        self.performance.add_metric(
-            "detector_p95",
-            "Detector P95",
+            "Detector cur / p95",
         )
 
         self.performance.add_metric(
             "tracker",
-            "Tracker",
+            "Tracker cur / p95",
         )
 
         self.performance.add_metric(
-            "tracker_p95",
-            "Tracker P95",
+            "frame_age",
+            "Frame Age cur / p95",
         )
 
-        self.performance.add_metric(
-            "frame_age_current",
-            "Frame Age",
-        )
-
+        # =====================================================
+        # 2. TARGET
+        # =====================================================
         self.target = DiagnosticSection("TARGET")
 
         self.target.add_metric(
             "status",
             "Status",
         )
+
         self.target.add_metric(
             "target_id",
             "Target ID",
         )
+
         self.target.add_metric(
             "search",
             "Search State",
@@ -226,35 +260,14 @@ class DiagnosticsPage(QWidget):
             "Missing Frames",
         )
 
-        self.control = DiagnosticSection("CONTROL / OUTPUT")
+        # =====================================================
+        # 3. CONTROL
+        # =====================================================
+        self.control = DiagnosticSection("CONTROL")
 
         self.control.add_metric(
             "mode",
             "Control Mode",
-        )
-        self.control.add_metric(
-            "gamepad",
-            "Gamepad",
-        )
-
-        self.control.add_metric(
-            "gamepad_pan_axis",
-            "Gamepad Pan Axis",
-        )
-
-        self.control.add_metric(
-            "gamepad_tilt_axis",
-            "Gamepad Tilt Axis",
-        )
-
-        self.control.add_metric(
-            "manual_pan",
-            "Manual Pan",
-        )
-
-        self.control.add_metric(
-            "manual_tilt",
-            "Manual Tilt",
         )
 
         self.control.add_metric(
@@ -287,50 +300,201 @@ class DiagnosticsPage(QWidget):
             "Final Tilt",
         )
 
-        self.control.add_metric(
-            "output",
+        # =====================================================
+        # 4. INPUT
+        # =====================================================
+        self.input_section = DiagnosticSection("INPUT")
+
+        self.input_section.add_metric(
+            "gamepad",
+            "Gamepad",
+        )
+
+        self.input_section.add_metric(
+            "pan_axis",
+            "Pan Axis",
+        )
+
+        self.input_section.add_metric(
+            "tilt_axis",
+            "Tilt Axis",
+        )
+
+        self.input_section.add_metric(
+            "manual_pan",
+            "Manual Pan",
+        )
+
+        self.input_section.add_metric(
+            "manual_tilt",
+            "Manual Tilt",
+        )
+
+        # =====================================================
+        # 5. OUTPUT
+        # =====================================================
+        self.output_section = DiagnosticSection("OUTPUT")
+
+        self.output_section.add_metric(
+            "mode",
             "Output Mode",
         )
 
-        top.addWidget(self.performance, 1)
-        top.addWidget(self.target, 1)
-        top.addWidget(self.control, 1)
+        self.output_section.add_metric(
+            "pan",
+            "Final Pan",
+        )
 
-        root.addLayout(top)
+        self.output_section.add_metric(
+            "tilt",
+            "Final Tilt",
+        )
 
-        log_frame = QFrame()
-        log_frame.setProperty(
+        # =====================================================
+        # 6. EVENTS
+        # =====================================================
+        event_frame = QFrame()
+
+        event_frame.setProperty(
             "diagSection",
             True,
         )
 
-        log_layout = QVBoxLayout(log_frame)
-        log_layout.setContentsMargins(
-            18,
-            16,
-            18,
-            16,
+        event_layout = QVBoxLayout(event_frame)
+
+        event_layout.setContentsMargins(
+            14,
+            12,
+            14,
+            12,
         )
 
-        log_title = QLabel("EVENT LOG")
-        log_title.setProperty(
+        event_layout.setSpacing(6)
+
+        event_header = QGridLayout()
+
+        event_title = QLabel("EVENTS")
+
+        event_title.setProperty(
             "diagSectionTitle",
             True,
         )
 
-        self.event_log = QPlainTextEdit()
-        self.event_log.setObjectName("eventLog")
-        self.event_log.setReadOnly(True)
-        self.event_log.setMaximumBlockCount(300)
+        clear_button = QPushButton("CLEAR")
 
-        log_layout.addWidget(log_title)
-        log_layout.addWidget(
+        clear_button.setProperty(
+            "secondaryButton",
+            True,
+        )
+
+        clear_button.setMaximumWidth(90)
+
+        event_header.addWidget(
+            event_title,
+            0,
+            0,
+        )
+
+        event_header.setColumnStretch(
+            0,
+            1,
+        )
+
+        event_header.addWidget(
+            clear_button,
+            0,
+            1,
+        )
+
+        self.event_log = QPlainTextEdit()
+
+        self.event_log.setObjectName("eventLog")
+
+        self.event_log.setReadOnly(True)
+
+        # Không giữ 300 dòng trên dashboard nữa.
+        self.event_log.setMaximumBlockCount(50)
+
+        clear_button.clicked.connect(self.event_log.clear)
+
+        event_layout.addLayout(event_header)
+
+        event_layout.addWidget(
             self.event_log,
             1,
         )
 
-        root.addWidget(
-            log_frame,
+        # =====================================================
+        # PLACE 6 BLOCKS
+        # =====================================================
+
+        # Row 0
+        dashboard.addWidget(
+            self.performance,
+            0,
+            0,
+        )
+
+        dashboard.addWidget(
+            self.target,
+            0,
+            1,
+        )
+
+        dashboard.addWidget(
+            self.control,
+            0,
+            2,
+        )
+
+        # Row 1
+        dashboard.addWidget(
+            self.input_section,
+            1,
+            0,
+        )
+
+        dashboard.addWidget(
+            self.output_section,
+            1,
+            1,
+        )
+
+        dashboard.addWidget(
+            event_frame,
+            1,
+            2,
+        )
+
+        # 3 cột bằng nhau.
+        dashboard.setColumnStretch(
+            0,
+            1,
+        )
+
+        dashboard.setColumnStretch(
+            1,
+            1,
+        )
+
+        dashboard.setColumnStretch(
+            2,
+            1,
+        )
+
+        # Hàng trên lớn hơn hàng dưới một chút.
+        dashboard.setRowStretch(
+            0,
+            11,
+        )
+
+        dashboard.setRowStretch(
+            1,
+            8,
+        )
+
+        root.addLayout(
+            dashboard,
             1,
         )
 
@@ -338,9 +502,9 @@ class DiagnosticsPage(QWidget):
         self,
         snapshot: RuntimeSnapshot,
     ) -> None:
-        # -------------------------
+        # =====================================================
         # PERFORMANCE
-        # -------------------------
+        # =====================================================
         self.performance.set_value(
             "camera_fps",
             f"{snapshot.camera_fps:.1f}",
@@ -352,63 +516,39 @@ class DiagnosticsPage(QWidget):
         )
 
         self.performance.set_value(
-            "frame_age",
-            f"{snapshot.frame_age_p95_ms:.1f} ms",
-        )
-
-        self.performance.set_value(
-            "frame_id",
-            str(snapshot.frame_id),
-        )
-
-        self.performance.set_value(
-            "detections",
-            str(snapshot.detection_count),
-        )
-
-        self.performance.set_value(
-            "tracks",
-            str(snapshot.track_count),
+            "objects",
+            (f"{snapshot.detection_count} / {snapshot.track_count}"),
         )
 
         self.performance.set_value(
             "inference",
-            f"{snapshot.model_inference_ms:.2f} ms",
-        )
-
-        self.performance.set_value(
-            "inference_p95",
-            f"{snapshot.model_inference_p95_ms:.2f} ms",
+            (
+                f"{snapshot.model_inference_ms:.2f} / "
+                f"{snapshot.model_inference_p95_ms:.2f} ms"
+            ),
         )
 
         self.performance.set_value(
             "detector",
-            f"{snapshot.detector_total_ms:.2f} ms",
-        )
-
-        self.performance.set_value(
-            "detector_p95",
-            f"{snapshot.detector_total_p95_ms:.2f} ms",
+            (
+                f"{snapshot.detector_total_ms:.2f} / "
+                f"{snapshot.detector_total_p95_ms:.2f} ms"
+            ),
         )
 
         self.performance.set_value(
             "tracker",
-            f"{snapshot.tracking_ms:.2f} ms",
+            (f"{snapshot.tracking_ms:.2f} / {snapshot.tracking_p95_ms:.2f} ms"),
         )
 
         self.performance.set_value(
-            "tracker_p95",
-            f"{snapshot.tracking_p95_ms:.2f} ms",
+            "frame_age",
+            (f"{snapshot.frame_age_ms:.2f} / {snapshot.frame_age_p95_ms:.2f} ms"),
         )
 
-        self.performance.set_value(
-            "frame_age_current",
-            f"{snapshot.frame_age_ms:.2f} ms",
-        )
-
-        # -------------------------
+        # =====================================================
         # TARGET
-        # -------------------------
+        # =====================================================
         self.target.set_value(
             "status",
             snapshot.target_status.value.upper(),
@@ -469,37 +609,12 @@ class DiagnosticsPage(QWidget):
             str(snapshot.target_missing_frames),
         )
 
-        # -------------------------
-        # CONTROL / OUTPUT
-        # -------------------------
+        # =====================================================
+        # CONTROL
+        # =====================================================
         self.control.set_value(
             "mode",
             snapshot.control_mode.value.upper(),
-        )
-
-        self.control.set_value(
-            "gamepad",
-            ("CONNECTED" if snapshot.gamepad_connected else "DISCONNECTED"),
-        )
-
-        self.control.set_value(
-            "gamepad_pan_axis",
-            f"{snapshot.gamepad_pan_axis:+.3f}",
-        )
-
-        self.control.set_value(
-            "gamepad_tilt_axis",
-            f"{snapshot.gamepad_tilt_axis:+.3f}",
-        )
-
-        self.control.set_value(
-            "manual_pan",
-            f"{snapshot.manual_pan_command:+.3f}",
-        )
-
-        self.control.set_value(
-            "manual_tilt",
-            f"{snapshot.manual_tilt_command:+.3f}",
         )
 
         self.control.set_value(
@@ -532,9 +647,50 @@ class DiagnosticsPage(QWidget):
             f"{snapshot.tilt_command:+.3f}",
         )
 
-        self.control.set_value(
-            "output",
+        # =====================================================
+        # INPUT
+        # =====================================================
+        self.input_section.set_value(
+            "gamepad",
+            ("CONNECTED" if snapshot.gamepad_connected else "DISCONNECTED"),
+        )
+
+        self.input_section.set_value(
+            "pan_axis",
+            f"{snapshot.gamepad_pan_axis:+.3f}",
+        )
+
+        self.input_section.set_value(
+            "tilt_axis",
+            f"{snapshot.gamepad_tilt_axis:+.3f}",
+        )
+
+        self.input_section.set_value(
+            "manual_pan",
+            f"{snapshot.manual_pan_command:+.3f}",
+        )
+
+        self.input_section.set_value(
+            "manual_tilt",
+            f"{snapshot.manual_tilt_command:+.3f}",
+        )
+
+        # =====================================================
+        # OUTPUT
+        # =====================================================
+        self.output_section.set_value(
+            "mode",
             snapshot.output_mode.upper(),
+        )
+
+        self.output_section.set_value(
+            "pan",
+            f"{snapshot.pan_command:+.3f}",
+        )
+
+        self.output_section.set_value(
+            "tilt",
+            f"{snapshot.tilt_command:+.3f}",
         )
 
     def add_event(

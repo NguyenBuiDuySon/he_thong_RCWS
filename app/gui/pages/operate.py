@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from PySide6.QtCore import (
     Qt,
     QThread,
@@ -16,12 +18,14 @@ from PySide6.QtWidgets import (
 
 from app.config import AppConfig
 from app.gui.widgets.video import VideoWidget
-from app.gui.workers.vision_runtime import (
-    VisionRuntimeWorker,
-)
 from app.runtime.snapshot import (
     RuntimeSnapshot,
 )
+
+if TYPE_CHECKING:
+    from app.gui.workers.vision_runtime import (
+        VisionRuntimeWorker,
+    )
 
 
 class StatusCard(QFrame):
@@ -32,17 +36,35 @@ class StatusCard(QFrame):
     ) -> None:
         super().__init__()
 
-        self.setProperty("statusCard", True)
+        self.setProperty(
+            "statusCard",
+            True,
+        )
+        self.setMinimumHeight(66)
 
         title_label = QLabel(title)
-        title_label.setProperty("cardTitle", True)
+        title_label.setProperty(
+            "cardTitle",
+            True,
+        )
 
         self.value_label = QLabel(value)
-        self.value_label.setProperty("cardValue", True)
+        self.value_label.setProperty(
+            "cardValue",
+            True,
+        )
+        self.value_label.setAlignment(
+            Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
+        )
 
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(16, 12, 16, 12)
-        layout.setSpacing(4)
+        layout.setContentsMargins(
+            14,
+            9,
+            14,
+            9,
+        )
+        layout.setSpacing(2)
 
         layout.addWidget(title_label)
         layout.addWidget(self.value_label)
@@ -56,17 +78,32 @@ class MetricCard(QFrame):
     ) -> None:
         super().__init__()
 
-        self.setProperty("metricCard", True)
+        self.setProperty(
+            "metricCard",
+            True,
+        )
+        self.setMinimumHeight(72)
 
         title_label = QLabel(title)
-        title_label.setProperty("metricTitle", True)
+        title_label.setProperty(
+            "metricTitle",
+            True,
+        )
 
         self.value_label = QLabel(value)
-        self.value_label.setProperty("metricValue", True)
+        self.value_label.setProperty(
+            "metricValue",
+            True,
+        )
 
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(14, 10, 14, 10)
-        layout.setSpacing(3)
+        layout.setContentsMargins(
+            14,
+            9,
+            14,
+            9,
+        )
+        layout.setSpacing(2)
 
         layout.addWidget(title_label)
         layout.addWidget(self.value_label)
@@ -89,12 +126,13 @@ class OperatePage(QWidget):
 
         root = QVBoxLayout(self)
         root.setContentsMargins(
-            28,
-            24,
-            28,
-            24,
+            18,
+            16,
+            18,
+            16,
         )
-        root.setSpacing(18)
+
+        root.setSpacing(12)
 
         header = self._build_header()
         content = self._build_content()
@@ -104,13 +142,19 @@ class OperatePage(QWidget):
         root.addLayout(content, 1)
         root.addLayout(telemetry)
 
-        self._start_runtime()
-
-    def _build_header(self) -> QHBoxLayout:
+    def _build_header(
+        self,
+    ) -> QHBoxLayout:
         layout = QHBoxLayout()
+        layout.setContentsMargins(
+            0,
+            0,
+            0,
+            0,
+        )
 
         text_layout = QVBoxLayout()
-        text_layout.setSpacing(2)
+        text_layout.setSpacing(1)
 
         title = QLabel("OPERATE")
         title.setObjectName("pageTitle")
@@ -121,25 +165,30 @@ class OperatePage(QWidget):
         text_layout.addWidget(title)
         text_layout.addWidget(subtitle)
 
-        system_badge = QLabel("GUI READY")
-        system_badge.setProperty("systemBadge", True)
-        system_badge.setAlignment(Qt.AlignmentFlag.AlignCenter)
-
         layout.addLayout(text_layout)
         layout.addStretch()
-        layout.addWidget(system_badge)
 
         return layout
 
-    def _build_content(self) -> QHBoxLayout:
+    def _build_content(
+        self,
+    ) -> QHBoxLayout:
         layout = QHBoxLayout()
-        layout.setSpacing(16)
+        layout.setSpacing(12)
 
         video_panel = self._build_video_panel()
+
         status_panel = self._build_status_panel()
 
-        layout.addWidget(video_panel, 3)
-        layout.addLayout(status_panel, 1)
+        layout.addWidget(
+            video_panel,
+            4,
+        )
+
+        layout.addLayout(
+            status_panel,
+            1,
+        )
 
         return layout
 
@@ -156,23 +205,25 @@ class OperatePage(QWidget):
 
         layout = QVBoxLayout(frame)
         layout.setContentsMargins(
-            8,
-            8,
-            8,
-            8,
+            4,
+            4,
+            4,
+            4,
         )
 
         layout.addWidget(self.video_widget)
 
         return frame
 
-    def _build_status_panel(self) -> QVBoxLayout:
+    def _build_status_panel(
+        self,
+    ) -> QVBoxLayout:
         layout = QVBoxLayout()
-        layout.setSpacing(10)
+        layout.setSpacing(7)
 
         self.system_card = StatusCard(
             "SYSTEM",
-            "GUI READY",
+            "STARTING",
         )
 
         self.mode_card = StatusCard("CONTROL MODE")
@@ -196,9 +247,10 @@ class OperatePage(QWidget):
             self.pan_card,
             self.tilt_card,
         ):
-            layout.addWidget(card)
-
-        layout.addStretch()
+            layout.addWidget(
+                card,
+                1,
+            )
 
         return layout
 
@@ -223,11 +275,23 @@ class OperatePage(QWidget):
             self.gamepad,
             self.output,
         ):
-            layout.addWidget(card)
+            layout.addWidget(
+                card,
+                1,
+            )
 
         return layout
 
-    def _start_runtime(self) -> None:
+    def start_runtime(self) -> None:
+        if self._runtime_thread is not None:
+            return
+
+        self.system_card.value_label.setText("STARTING")
+
+        from app.gui.workers.vision_runtime import (
+            VisionRuntimeWorker,
+        )
+
         self._runtime_thread = QThread(self)
 
         self._runtime_worker = VisionRuntimeWorker(self._config)

@@ -1,5 +1,23 @@
 # CHECKPOINT
 
+## GUI OPERATE V2 acceptance
+Update: 2026-10-09
+Status: PASS
+- six-block diagnostic dashboard accepted
+- runtime snapshot verified
+- input -> control -> output path remains visible
+- event log reduced to operational size
+- no backend/runtime logic changed
+- final V1 OPERATE layout accepted
+- live runtime data verified
+- target selection verified
+- MANUAL/AUTO status verified
+- pan/tilt command display verified
+- telemetry verified
+- GUI initial appearance approximately 0.6–1.0 s
+
+Further visual polish deferred.
+
 ## GUI G4 — Diagnostics acceptance
 Update: 2026-10-07
 Status: DONE
