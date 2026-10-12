@@ -1,4 +1,31 @@
 # PROJECT SESSION HANDOFF
+Updated: 2026-10-12
+## GUI — SETUP V2
+
+Status: ACCEPTED FOR V1
+
+Layout:
+- CAMERA
+- GAMEPAD
+- OUTPUT
+- SERIAL
+
+Implemented:
+- load configuration from configs/default.yaml
+- editable camera parameters
+- readable gamepad mapping
+- output mode selection
+- serial transport configuration
+- SAVE CONFIG with validation
+- temporary-file validation before replacing active YAML
+- RESET reloads the latest saved configuration from disk
+- SERIAL section enabled only when output mode is serial
+- configuration changes require application restart
+
+Decision:
+SETUP V2 is sufficient for System V1.
+Live reconfiguration is intentionally not required for V1.
+
 Updated: 2026-10-09
 ## GUI — DIAGNOSTICS V2
 

@@ -4,51 +4,39 @@ camera:
   height: 720
   fps: 30
   backend: dshow
-
 tracker:
   algorithm: bytetrack
   lost_track_buffer: 30
-  track_activation_threshold: 0.70
+  track_activation_threshold: 0.7
   minimum_consecutive_frames: 2
-  minimum_iou_threshold: 0.10
-  high_conf_det_threshold: 0.60
-
-
+  minimum_iou_threshold: 0.1
+  high_conf_det_threshold: 0.6
 targeting:
   lost_timeout_frames: 90
   dead_zone_x_norm: 0.05
   dead_zone_y_norm: 0.05
   control_filter_tau_ms: 70.0
-
 control:
   kp_pan: 1.0
   kp_tilt: 1.0
-
   max_pan_command: 1.0
   max_tilt_command: 1.0
-
   pan_rate_per_s: 2.0
   tilt_rate_per_s: 2.0
-
   watchdog_timeout_s: 0.25
-
   gamepad:
     joystick_index: 0
     pan_axis_index: 0
     tilt_axis_index: 1
     mode_button_index: 5
-    dead_zone: 0.10
+    dead_zone: 0.1
     invert_tilt: true
-
-
 output:
   mode: "null"
-
   serial:
-    port: "COM3"
+    port: COM3
     baudrate: 115200
-    write_timeout_s: 0.10
-
+    write_timeout_s: 0.1
 detector:
   model: yolo26n.pt
   device: auto
@@ -57,10 +45,8 @@ detector:
   confidence: 0.25
   max_det: 100
   warmup_iterations: 10
-
 telemetry:
   rolling_window_frames: 120
-
 display:
-  window_name: "Vision Tracking System"
+  window_name: Vision Tracking System
   show_crosshair: true

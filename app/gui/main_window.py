@@ -328,66 +328,60 @@ class MainWindow(QMainWindow):
         QFrame[setupSection="true"] {
         background-color: #0d1c26;
         border: 1px solid #1c3848;
-        border-radius: 9px;
-            }
+        border-radius: 6px;
+    }
 
-        QLabel[setupSectionTitle="true"] {
-            color: #53f0c0;
-            font-size: 15px;
-            font-weight: 700;
-        }
+    QLabel[setupSectionTitle="true"] {
+        color: #53f0c0;
+        font-size: 15px;
+        font-weight: 700;
+        padding-bottom: 4px;
+    }
 
-        QLabel[setupLabel="true"] {
-            color: #90a8b7;
-            font-size: 12px;
-        }
+    QLabel[setupKey="true"] {
+        color: #8aa2b0;
+        font-size: 13px;
+        font-weight: 600;
+    }
 
-        QLineEdit,
-        QSpinBox,
-        QDoubleSpinBox,
-        QComboBox {
-            background-color: #07141d;
-            border: 1px solid #264657;
-            border-radius: 6px;
-            color: #d8e7f0;
-            padding: 7px 9px;
-            min-height: 24px;
-        }
+    QLineEdit,
+    QSpinBox,
+    QDoubleSpinBox,
+    QComboBox {
+        background-color: #07141d;
+        border: 1px solid #264657;
+        border-radius: 5px;
+        color: #d8e7f0;
+        min-height: 38px;
+        padding-left: 10px;
+        padding-right: 10px;
+        font-size: 14px;
+    }
 
-        QLineEdit:focus,
-        QSpinBox:focus,
-        QDoubleSpinBox:focus,
-        QComboBox:focus {
-            border: 1px solid #53f0c0;
-        }
+    QLineEdit:focus,
+    QSpinBox:focus,
+    QDoubleSpinBox:focus,
+    QComboBox:focus {
+        border: 1px solid #53f0c0;
+    }
 
-        QCheckBox {
-            color: #d8e7f0;
-            spacing: 8px;
-        }
+    QCheckBox {
+        color: #d8e7f0;
+        font-size: 14px;
+        spacing: 8px;
+    }
 
-        QLabel[setupNotice="true"] {
-            color: #e0b85c;
-            font-size: 12px;
-        }
+    QLabel[setupNotice="true"] {
+        color: #d2b56b;
+        font-size: 12px;
+    }
 
-        QPushButton[primaryButton="true"] {
-            background-color: #10372f;
-            border: 1px solid #2ccf9c;
-            border-radius: 6px;
-            color: #53f0c0;
-            padding: 10px 16px;
-            font-weight: 700;
-        }
-
-        QPushButton[secondaryButton="true"] {
-            background-color: #10212d;
-            border: 1px solid #315165;
-            border-radius: 6px;
-            color: #b9cbd5;
-            padding: 10px 16px;
-            font-weight: 600;
-        }
+    QPushButton[primaryButton="true"],
+    QPushButton[secondaryButton="true"] {
+        min-height: 38px;
+        padding: 0 18px;
+        font-weight: 700;
+    }
 
                 /* =========================
         OPERATE FINAL LAYOUT

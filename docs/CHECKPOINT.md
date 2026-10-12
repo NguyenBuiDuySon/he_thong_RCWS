@@ -1,4 +1,15 @@
 # CHECKPOINT
+Update: 2026-10-12
+## GUI Setup V2 acceptance
+
+Status: PASS
+
+- configuration layout accepted
+- save validated
+- reset-from-disk validated
+- output null/serial switching validated
+- serial settings conditionally enabled
+- restart-required behavior accepted
 
 ## GUI OPERATE V2 acceptance
 Update: 2026-10-09
