@@ -32,7 +32,7 @@ control:
     dead_zone: 0.1
     invert_tilt: true
 output:
-  mode: "null"
+  mode: 'null'
   serial:
     port: COM3
     baudrate: 115200

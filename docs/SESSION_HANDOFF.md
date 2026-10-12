@@ -1,5 +1,60 @@
 # PROJECT SESSION HANDOFF
 Updated: 2026-10-12
+
+## GUI V1 — FUNCTIONAL COMPLETE
+
+Status: ACCEPTED
+
+Completed pages:
+
+### OPERATE
+- live camera / Vision overlay
+- target selection and clear
+- MANUAL_GAMEPAD / AUTO_VISION state
+- target / search state
+- final pan / tilt command
+- runtime performance summary
+
+### DIAGNOSTICS
+- PERFORMANCE
+- TARGET
+- CONTROL
+- INPUT
+- OUTPUT
+- EVENTS
+- live RuntimeSnapshot integration
+- control-path visibility
+- runtime transition logging
+
+### SETUP
+- CAMERA
+- GAMEPAD
+- OUTPUT
+- SERIAL
+- config load from disk
+- validated SAVE CONFIG
+- RESET from disk
+- serial section conditional on output mode
+- restart-required policy
+
+### TUNING
+- DETECTOR
+- TRACKER
+- TARGETING
+- CONTROL
+- config load from disk
+- validated SAVE TUNING
+- RESET from disk
+- tuning changes require restart
+
+GUI V1 design decision:
+- prioritize operational readability and correct runtime information
+- no unnecessary decorative elements
+- no live hot-reconfiguration required for V1
+- further visual polish deferred
+
+Next development focus:
+Vision V1+ Active Lost-Target Search / Reacquire.
 ## GUI — SETUP V2
 
 Status: ACCEPTED FOR V1

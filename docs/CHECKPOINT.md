@@ -1,5 +1,31 @@
 # CHECKPOINT
 Update: 2026-10-12
+## GUI V1 Acceptance
+Update: 2026-10-12
+
+Status: DONE
+
+Accepted:
+- OPERATE
+- DIAGNOSTICS
+- SETUP
+- TUNING
+
+Verified:
+- live Vision integration
+- MANUAL / AUTO status
+- target selection
+- runtime telemetry
+- diagnostics event flow
+- setup save/reset
+- tuning save/reset
+- configuration validation
+
+Decision:
+GUI V1 is functionally complete.
+
+Next:
+Vision V1+ Active Lost-Target Search.
 ## GUI Setup V2 acceptance
 
 Status: PASS

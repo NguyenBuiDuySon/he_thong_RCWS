@@ -19,6 +19,7 @@ from app.gui.pages.diagnostics import (
 )
 from app.gui.pages.operate import OperatePage
 from app.gui.pages.setup import SetupPage
+from app.gui.pages.tuning import TuningPage
 
 
 class PlaceholderPage(QWidget):
@@ -65,6 +66,8 @@ class MainWindow(QMainWindow):
 
         self._setup_page = SetupPage(config)
 
+        self._tuning_page = TuningPage(config)
+
         self._operate_page.snapshot_updated.connect(
             self._diagnostics_page.apply_snapshot
         )
@@ -77,12 +80,7 @@ class MainWindow(QMainWindow):
 
         self._pages.addWidget(self._setup_page)
 
-        self._pages.addWidget(
-            PlaceholderPage(
-                "TUNING",
-                "Các tham số điều khiển được phép chỉnh",
-            )
-        )
+        self._pages.addWidget(self._tuning_page)
 
         root = QWidget()
         root_layout = QHBoxLayout(root)
@@ -224,232 +222,251 @@ class MainWindow(QMainWindow):
                 border-radius: 5px;
             }
 
-        QLabel[videoPlaceholder="true"] {
-            color: #486473;
-            font-size: 18px;
-            font-weight: 600;
-        }
+            QLabel[videoPlaceholder="true"] {
+                color: #486473;
+                font-size: 18px;
+                font-weight: 600;
+            }
 
-        QFrame[statusCard="true"] {
-            background-color: #0b1a24;
-            border: 1px solid #244554;
-            border-radius: 5px;
-        }
+            QFrame[statusCard="true"] {
+                background-color: #0b1a24;
+                border: 1px solid #244554;
+                border-radius: 5px;
+            }
 
-        QLabel[cardTitle="true"] {
-            color: #8aa2b0;
-            font-size: 12px;
-            font-weight: 600;
-        }
+            QLabel[cardTitle="true"] {
+                color: #8aa2b0;
+                font-size: 12px;
+                font-weight: 600;
+            }
 
-        QLabel[cardValue="true"] {
-            color: #53f0c0;
-            font-size: 19px;
-            font-weight: 700;
-        }
+            QLabel[cardValue="true"] {
+                color: #53f0c0;
+                font-size: 19px;
+                font-weight: 700;
+            }
 
-        QLabel[cardTitle="true"] {
-            color: #7793a3;
-            font-size: 11px;
-            font-weight: 600;
-        }
+            QLabel[cardTitle="true"] {
+                color: #7793a3;
+                font-size: 11px;
+                font-weight: 600;
+            }
 
-        QLabel[cardValue="true"] {
-            color: #53f0c0;
-            font-size: 20px;
-            font-weight: 700;
-        }
+            QLabel[cardValue="true"] {
+                color: #53f0c0;
+                font-size: 20px;
+                font-weight: 700;
+            }
 
-        QFrame[metricCard="true"] {
-            background-color: #0d1c26;
-            border: 1px solid #1c3848;
-            border-radius: 8px;
-        }
+            QFrame[metricCard="true"] {
+                background-color: #0d1c26;
+                border: 1px solid #1c3848;
+                border-radius: 8px;
+            }
 
-        QLabel[metricTitle="true"] {
-            color: #7793a3;
-            font-size: 10px;
-            font-weight: 600;
-        }
+            QLabel[metricTitle="true"] {
+                color: #7793a3;
+                font-size: 10px;
+                font-weight: 600;
+            }
 
-        QLabel[metricValue="true"] {
-            color: #d8e7f0;
-            font-size: 16px;
-            font-weight: 700;
-        }
+            QLabel[metricValue="true"] {
+                color: #d8e7f0;
+                font-size: 16px;
+                font-weight: 700;
+            }
 
-        QLabel[systemBadge="true"] {
-            background-color: #10372f;
-            border: 1px solid #2ccf9c;
-            border-radius: 6px;
-            color: #53f0c0;
-            font-weight: 700;
-            padding: 8px 16px;
-        }
+            QLabel[systemBadge="true"] {
+                background-color: #10372f;
+                border: 1px solid #2ccf9c;
+                border-radius: 6px;
+                color: #53f0c0;
+                font-weight: 700;
+                padding: 8px 16px;
+            }
 
-        QFrame[diagSection="true"] {
-            background-color: #0b1a24;
-            border: 1px solid #244554;
-            border-radius: 5px;
-        }
+            QFrame[diagSection="true"] {
+                background-color: #0b1a24;
+                border: 1px solid #244554;
+                border-radius: 5px;
+            }
 
-        QLabel[diagSectionTitle="true"] {
-            color: #53f0c0;
-            font-size: 15px;
-            font-weight: 700;
-            padding-bottom: 4px;
-        }
+            QLabel[diagSectionTitle="true"] {
+                color: #53f0c0;
+                font-size: 15px;
+                font-weight: 700;
+                padding-bottom: 4px;
+            }
 
-        QLabel[diagKey="true"] {
-            background-color: #081721;
-            color: #8aa2b0;
-            font-size: 12px;
-            padding: 3px 6px;
-        }
+            QLabel[diagKey="true"] {
+                background-color: #081721;
+                color: #8aa2b0;
+                font-size: 12px;
+                padding: 3px 6px;
+            }
 
-        QLabel[diagValue="true"] {
-            background-color: #07141d;
-            color: #e0edf3;
-            font-size: 14px;
-            font-weight: 600;
-            padding: 3px 7px;
-        }
+            QLabel[diagValue="true"] {
+                background-color: #07141d;
+                color: #e0edf3;
+                font-size: 14px;
+                font-weight: 600;
+                padding: 3px 7px;
+            }
 
-        QPlainTextEdit#eventLog {
-            background-color: #050e15;
-            border: 1px solid #1f3d4d;
-            border-radius: 4px;
-            color: #c4d6df;
-            font-family: "Cascadia Mono";
-            font-size: 13px;
-            padding: 8px;
-        }
+            QPlainTextEdit#eventLog {
+                background-color: #050e15;
+                border: 1px solid #1f3d4d;
+                border-radius: 4px;
+                color: #c4d6df;
+                font-family: "Cascadia Mono";
+                font-size: 13px;
+                padding: 8px;
+            }
 
-        QFrame[setupSection="true"] {
-        background-color: #0d1c26;
-        border: 1px solid #1c3848;
-        border-radius: 6px;
-    }
+            QFrame[setupSection="true"] {
+                background-color: #0d1c26;
+                border: 1px solid #1c3848;
+                border-radius: 6px;
+            }
 
-    QLabel[setupSectionTitle="true"] {
-        color: #53f0c0;
-        font-size: 15px;
-        font-weight: 700;
-        padding-bottom: 4px;
-    }
+            QLabel[setupSectionTitle="true"] {
+                color: #53f0c0;
+                font-size: 15px;
+                font-weight: 700;
+                padding-bottom: 4px;
+            }
 
-    QLabel[setupKey="true"] {
-        color: #8aa2b0;
-        font-size: 13px;
-        font-weight: 600;
-    }
+            QLabel[setupKey="true"] {
+                color: #8aa2b0;
+                font-size: 13px;
+                font-weight: 600;
+            }
 
-    QLineEdit,
-    QSpinBox,
-    QDoubleSpinBox,
-    QComboBox {
-        background-color: #07141d;
-        border: 1px solid #264657;
-        border-radius: 5px;
-        color: #d8e7f0;
-        min-height: 38px;
-        padding-left: 10px;
-        padding-right: 10px;
-        font-size: 14px;
-    }
+            QLineEdit,
+            QSpinBox,
+            QDoubleSpinBox,
+            QComboBox {
+                background-color: #07141d;
+                border: 1px solid #264657;
+                border-radius: 5px;
+                color: #d8e7f0;
+                min-height: 38px;
+                padding-left: 10px;
+                padding-right: 10px;
+                font-size: 14px;
+            }
 
-    QLineEdit:focus,
-    QSpinBox:focus,
-    QDoubleSpinBox:focus,
-    QComboBox:focus {
-        border: 1px solid #53f0c0;
-    }
+            QLineEdit:focus,
+            QSpinBox:focus,
+            QDoubleSpinBox:focus,
+            QComboBox:focus {
+                border: 1px solid #53f0c0;
+            }
 
-    QCheckBox {
-        color: #d8e7f0;
-        font-size: 14px;
-        spacing: 8px;
-    }
+            QCheckBox {
+                color: #d8e7f0;
+                font-size: 14px;
+                spacing: 8px;
+            }
 
-    QLabel[setupNotice="true"] {
-        color: #d2b56b;
-        font-size: 12px;
-    }
+            QLabel[setupNotice="true"] {
+                color: #d2b56b;
+                font-size: 12px;
+            }
 
-    QPushButton[primaryButton="true"],
-    QPushButton[secondaryButton="true"] {
-        min-height: 38px;
-        padding: 0 18px;
-        font-weight: 700;
-    }
+            QPushButton[primaryButton="true"],
+            QPushButton[secondaryButton="true"] {
+                min-height: 38px;
+                padding: 0 18px;
+                font-weight: 700;
+            }
 
-                /* =========================
-        OPERATE FINAL LAYOUT
-        ========================= */
+                    /* =========================
+            OPERATE FINAL LAYOUT
+            ========================= */
 
-            QFrame[videoPanel="true"] {
-            background-color: #050c12;
-            border: 1px solid #244554;
-            border-radius: 5px;
-        }
+                QFrame[videoPanel="true"] {
+                background-color: #050c12;
+                border: 1px solid #244554;
+                border-radius: 5px;
+            }
 
-        QFrame[operateStatusPanel="true"] {
-            background-color: #091720;
-            border: 1px solid #28404d;
-            border-radius: 4px;
-        }
+            QFrame[operateStatusPanel="true"] {
+                background-color: #091720;
+                border: 1px solid #28404d;
+                border-radius: 4px;
+            }
 
-        QLabel[operateSectionTitle="true"] {
-            background-color: #07131b;
-            color: #d7e5ec;
-            font-size: 14px;
-            font-weight: 700;
-            padding: 7px 8px;
-        }
+            QLabel[operateSectionTitle="true"] {
+                background-color: #07131b;
+                color: #d7e5ec;
+                font-size: 14px;
+                font-weight: 700;
+                padding: 7px 8px;
+            }
 
-        QFrame[statusCard="true"] {
-            background-color: #0b1a24;
-            border: 1px solid #244554;
-            border-radius: 5px;
-        }
+            QFrame[statusCard="true"] {
+                background-color: #0b1a24;
+                border: 1px solid #244554;
+                border-radius: 5px;
+            }
 
-        QLabel[cardTitle="true"] {
-            color: #8aa2b0;
-            font-size: 12px;
-            font-weight: 600;
-        }
+            QLabel[cardTitle="true"] {
+                color: #8aa2b0;
+                font-size: 12px;
+                font-weight: 600;
+            }
 
-        QLabel[cardValue="true"] {
-            color: #53f0c0;
-            font-size: 19px;
-            font-weight: 700;
-        }
+            QLabel[cardValue="true"] {
+                color: #53f0c0;
+                font-size: 19px;
+                font-weight: 700;
+            }
 
-        QFrame[telemetryStrip="true"] {
-            background-color: #091720;
-            border: 1px solid #28404d;
-            border-radius: 4px;
-        }
+            QFrame[telemetryStrip="true"] {
+                background-color: #091720;
+                border: 1px solid #28404d;
+                border-radius: 4px;
+            }
 
-        QFrame[metricCard="true"] {
-            background-color: #0b1a24;
-            border: 1px solid #244554;
-            border-radius: 5px;
-        }
+            QFrame[metricCard="true"] {
+                background-color: #0b1a24;
+                border: 1px solid #244554;
+                border-radius: 5px;
+            }
 
-        QLabel[metricTitle="true"] {
-            color: #8aa2b0;
-            font-size: 11px;
-            font-weight: 600;
-        }
+            QLabel[metricTitle="true"] {
+                color: #8aa2b0;
+                font-size: 11px;
+                font-weight: 600;
+            }
 
-        QLabel[metricValue="true"] {
-            color: #e0edf3;
-            font-size: 20px;
-            font-weight: 700;
-        }
+            QLabel[metricValue="true"] {
+                color: #e0edf3;
+                font-size: 20px;
+                font-weight: 700;
+            }
 
-            """
+            QFrame[tuningSection="true"] {
+                background-color: #0d1c26;
+                border: 1px solid #1c3848;
+                border-radius: 6px;
+            }
+
+            QLabel[tuningSectionTitle="true"] {
+                color: #53f0c0;
+                font-size: 15px;
+                font-weight: 700;
+                padding-bottom: 4px;
+            }
+
+            QLabel[tuningKey="true"] {
+                color: #8aa2b0;
+                font-size: 13px;
+                font-weight: 600;
+            }
+            
+                """
         )
 
     def closeEvent(
