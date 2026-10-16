@@ -1,4 +1,48 @@
 # PROJECT SESSION HANDOFF
+Updated: 2026-10-17
+## Vision V1+ — Active Lost-Target Search
+
+### AS1 — Search State Machine
+Status: DONE
+
+### AS2 — Target Motion Memory
+Status: DONE
+
+### AS3 — Active Search Command
+Status: DONE
+
+Implemented:
+- SearchCommandGenerator
+- COAST command follows last observed motion
+- REACQUIRE holds camera
+- SEARCHING performs alternating bounded command sweep
+- search begins in the last known target direction
+- horizontal search is preferred when both X/Y motion exist
+- pure vertical loss uses tilt search
+- runtime integration with AUTO_VISION
+- existing CommandArbiter retained
+- existing SlewRateLimiter retained
+- reacquisition immediately returns control to TrackingController
+- timeout stops search and returns target to IDLE
+
+Current provisional search baseline:
+- coast: 6 frames
+- passive reacquire: 24 frames
+- coast command: 0.18
+- search command: 0.22
+- sweep leg: 12 frames
+
+Important:
+These values are provisional V1+ parameters, not final motor calibration.
+
+Current output mode during software validation:
+null
+
+Smart Reacquire Vision V1 baseline remains unchanged.
+
+Next:
+AS4 — live acceptance / hardware-output integration.
+
 Updated: 2026-10-16
 ## Vision V1+ — Active Lost-Target Search
 

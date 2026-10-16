@@ -40,6 +40,10 @@ from app.targeting.observation import (
 )
 from app.targeting.search import (
     SearchController,
+    SearchState,
+)
+from app.targeting.search_command import (
+    SearchCommandGenerator,
 )
 from app.targeting.selection import pick_track_at_point
 from app.targeting.types import TargetStatus
@@ -216,9 +220,18 @@ class VisionRuntimeWorker(QObject):
 
             motion_target_id: int | None = None
 
+            search_coast_frames = 6
+            search_reacquire_frames = 24
+
             search_controller = SearchController(
-                coast_frames=6,
-                reacquire_frames=24,
+                coast_frames=search_coast_frames,
+                reacquire_frames=search_reacquire_frames,
+            )
+
+            search_command_generator = SearchCommandGenerator(
+                coast_command=0.18,
+                search_command=0.22,
+                sweep_leg_frames=12,
             )
 
             error_filter = TrackingErrorFilter(
@@ -445,6 +458,55 @@ class VisionRuntimeWorker(QObject):
                     timed_out=timed_out,
                 )
 
+                search_start_missing_frame = (
+                    search_coast_frames + search_reacquire_frames + 1
+                )
+
+                search_age_frames = (
+                    max(
+                        0,
+                        target.missing_frames - search_start_missing_frame,
+                    )
+                    if search_state is SearchState.SEARCHING
+                    else 0
+                )
+
+                search_command = search_command_generator.update(
+                    state=search_state,
+                    motion=motion_memory.estimate,
+                    search_age_frames=search_age_frames,
+                )
+
+                search_command = search_command_generator.update(
+                    state=search_state,
+                    motion=motion_memory.estimate,
+                    search_age_frames=search_age_frames,
+                )
+
+                # AS3 DEBUG — remove/disable after validation
+                if search_state in {
+                    SearchState.COAST,
+                    SearchState.SEARCHING,
+                } and target.missing_frames in {
+                    1,
+                    6,
+                    31,
+                    43,
+                    55,
+                    67,
+                }:
+                    print(
+                        "SEARCH CMD"
+                        f" | state={search_state.value}"
+                        f" | miss={target.missing_frames}"
+                        f" | age={search_age_frames}"
+                        f" | pan={search_command.pan_norm:+.3f}"
+                        f" | tilt={search_command.tilt_norm:+.3f}"
+                        f" | motion=("
+                        f"{motion_memory.estimate.direction_x:+d},"
+                        f"{motion_memory.estimate.direction_y:+d})"
+                    )
+
                 frame_height, frame_width = packet.image.shape[:2]
 
                 observation = build_target_observation(
@@ -473,6 +535,12 @@ class VisionRuntimeWorker(QObject):
                     active=(filtered_error is not None),
                 )
 
+                auto_vision_command = (
+                    vision_command
+                    if target.status is TargetStatus.LOCKED
+                    else search_command
+                )
+
                 gamepad_state = gamepad.poll()
 
                 if not gamepad_state.connected:
@@ -497,7 +565,7 @@ class VisionRuntimeWorker(QObject):
 
                 selected_command = arbiter.select(
                     manual_command=manual_command,
-                    auto_vision_command=vision_command,
+                    auto_vision_command=auto_vision_command,
                 )
 
                 command = command_limiter.update(
@@ -582,8 +650,8 @@ class VisionRuntimeWorker(QObject):
                     gamepad_tilt_axis=(gamepad_state.tilt_axis),
                     manual_pan_command=(manual_command.pan_norm),
                     manual_tilt_command=(manual_command.tilt_norm),
-                    vision_pan_command=(vision_command.pan_norm),
-                    vision_tilt_command=(vision_command.tilt_norm),
+                    vision_pan_command=(auto_vision_command.pan_norm),
+                    vision_tilt_command=(auto_vision_command.tilt_norm),
                     selected_pan_command=(selected_command.pan_norm),
                     selected_tilt_command=(selected_command.tilt_norm),
                     output_mode=(self._config.output.mode),

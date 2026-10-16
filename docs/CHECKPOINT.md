@@ -1,5 +1,34 @@
 # CHECKPOINT
+## Active Search AS3 Acceptance
+Update: 2026-10-17
 
+Status: DONE
+
+Verified:
+- loss-direction coast command
+- passive reacquire interval
+- alternating search sweep
+- pan-priority search when X and Y motion coexist
+- tilt search for pure vertical motion
+- timeout -> stop / IDLE
+- short loss -> normal reacquisition
+- AUTO_VISION runtime integration
+- output-null software validation
+
+Observed:
+mixed motion (-1,+1):
+SEARCHING pan sequence
+-0.220 -> +0.220 -> -0.220 -> +0.220
+
+pure vertical motion (0,-1):
+SEARCHING tilt sequence
+-0.220 -> +0.220 -> -0.220 -> +0.220
+
+Decision:
+AS3 accepted.
+
+Next:
+AS4 — acceptance with real actuator/output path.
 ## Active Search AS2 Acceptance
 Update: 2026-10-16
 
@@ -26,6 +55,13 @@ AS2 accepted.
 Next:
 AS3 — generate bounded pan/tilt search commands from frozen
 loss-direction information.
+
+Current resume point:
+
+AS4 — Active Search Acceptance / Hardware Output Integration
+
+Do not redesign Smart Reacquire.
+Do not expand into full Vision V2 before System V1+ hardware acceptance.
 
 Update: 2026-10-12
 ## GUI V1 Acceptance
