@@ -87,3 +87,25 @@ def test_reacquired_target_returns_inactive() -> None:
     )
 
     assert state is SearchState.INACTIVE
+
+
+def test_timeout_transition_from_lost_to_idle() -> None:
+    controller = SearchController(
+        coast_frames=2,
+        reacquire_frames=3,
+    )
+
+    state = controller.update(
+        target_status=TargetStatus.LOST,
+        missing_frames=6,
+    )
+
+    assert state is SearchState.SEARCHING
+
+    state = controller.update(
+        target_status=TargetStatus.IDLE,
+        missing_frames=0,
+        timed_out=True,
+    )
+
+    assert state is SearchState.LOST

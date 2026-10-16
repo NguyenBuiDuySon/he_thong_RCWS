@@ -1,7 +1,34 @@
 # CHECKPOINT
+
+## Active Search AS2 Acceptance
+Update: 2026-10-16
+
+Status: DONE
+
+Verified:
+- motion direction extraction
+- normalized velocity
+- smoothing / deadband
+- frame-gap handling
+- runtime integration
+- motion preservation through LOST -> LOCKED
+- motion preservation when Smart Reacquire assigns a new tracker ID
+- live repeated exit/re-entry behavior
+
+Observed live result:
+- 18 LOSS MOTION events reviewed
+- no samples=0 events after rebase fix
+- motion history remained usable across reacquisition
+
+Decision:
+AS2 accepted.
+
+Next:
+AS3 — generate bounded pan/tilt search commands from frozen
+loss-direction information.
+
 Update: 2026-10-12
 ## GUI V1 Acceptance
-Update: 2026-10-12
 
 Status: DONE
 

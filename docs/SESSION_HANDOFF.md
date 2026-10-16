@@ -1,4 +1,53 @@
 # PROJECT SESSION HANDOFF
+Updated: 2026-10-16
+## Vision V1+ — Active Lost-Target Search
+
+Branch:
+`feat/vision-active-search-v1`
+
+### AS1 — Search State Machine
+Status: DONE
+
+Implemented:
+- SearchController
+- INACTIVE
+- COAST
+- REACQUIRE
+- SEARCHING
+- LOST
+- runtime SearchState integration
+- timeout transition handling
+
+### AS2 — Target Motion Memory
+Status: DONE
+
+Implemented:
+- TargetMotionMemory
+- normalized image-plane dx/dy
+- exponential smoothing
+- direction deadband
+- frame-gap normalization
+- LOCKED target motion sampling
+- LOSS MOTION diagnostics
+- motion preservation across reacquisition using rebase()
+- motion preservation across tracker ID changes for the same logical target
+- reset when target is actually cleared / returns to IDLE
+
+Live validation:
+- repeated short-loss/reacquire passed
+- long-loss/new-ID reacquire passed
+- no observed motion-history reset to samples=0 after rebase fix
+- motion direction remains available for the next search phase
+
+Important:
+AS2 is observation-only.
+No active pan/tilt search command is generated yet.
+
+Smart Reacquire baseline remains frozen and unchanged.
+
+Next:
+AS3 — bounded Active Search Command Generation.
+
 Updated: 2026-10-12
 
 ## GUI V1 — FUNCTIONAL COMPLETE

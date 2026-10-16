@@ -31,14 +31,15 @@ from app.hud.overlay import (
 )
 from app.output.factory import build_command_output
 from app.perception import process_perception_frame
-from app.runtime.snapshot import (
-    RuntimeSnapshot,
-    SearchState,
-)
+from app.runtime.snapshot import RuntimeSnapshot
 from app.targeting.filter import TrackingErrorFilter
 from app.targeting.manager import TargetManager
+from app.targeting.motion import TargetMotionMemory
 from app.targeting.observation import (
     build_target_observation,
+)
+from app.targeting.search import (
+    SearchController,
 )
 from app.targeting.selection import pick_track_at_point
 from app.targeting.types import TargetStatus
@@ -208,6 +209,18 @@ class VisionRuntimeWorker(QObject):
                 lost_timeout_frames=(self._config.targeting.lost_timeout_frames)
             )
 
+            motion_memory = TargetMotionMemory(
+                alpha=0.5,
+                direction_deadband=0.001,
+            )
+
+            motion_target_id: int | None = None
+
+            search_controller = SearchController(
+                coast_frames=6,
+                reacquire_frames=24,
+            )
+
             error_filter = TrackingErrorFilter(
                 tau_ms=(self._config.targeting.control_filter_tau_ms)
             )
@@ -287,11 +300,122 @@ class VisionRuntimeWorker(QObject):
 
                 target = target_manager.update(track_batch)
 
+                frame_height, frame_width = packet.image.shape[:2]
+
+                if target.status is TargetStatus.LOCKED and target.track is not None:
+                    current_target_id = target.track.track_id
+
+                    new_selection = previous_target_status is TargetStatus.IDLE
+
+                    direct_retarget = (
+                        previous_target_status is TargetStatus.LOCKED
+                        and motion_target_id is not None
+                        and current_target_id != motion_target_id
+                    )
+
+                    reacquired = previous_target_status is TargetStatus.LOST
+
+                    if motion_target_id is None or new_selection or direct_retarget:
+                        motion_memory.reset()
+                        motion_target_id = current_target_id
+
+                        motion_memory.update(
+                            frame_id=packet.frame_id,
+                            track=target.track,
+                            frame_width=frame_width,
+                            frame_height=frame_height,
+                        )
+
+                    elif reacquired:
+                        motion_target_id = current_target_id
+
+                        motion_memory.rebase(
+                            frame_id=packet.frame_id,
+                            track=target.track,
+                            frame_width=frame_width,
+                            frame_height=frame_height,
+                        )
+
+                    else:
+                        motion_target_id = current_target_id
+
+                        motion_memory.update(
+                            frame_id=packet.frame_id,
+                            track=target.track,
+                            frame_width=frame_width,
+                            frame_height=frame_height,
+                        )
+
+                elif target.status is TargetStatus.IDLE:
+                    motion_memory.reset()
+                    motion_target_id = None
+
+                if target.status is TargetStatus.LOST:
+                    diagnostics = target_manager.reacquire_diagnostics
+
+                    should_log = (
+                        target.missing_frames
+                        in {
+                            1,
+                            6,
+                            15,
+                            30,
+                            60,
+                        }
+                        or diagnostics.candidate_count > 0
+                        or diagnostics.rejected_ambiguous
+                    )
+
+                    if should_log:
+                        best_score = (
+                            "-"
+                            if diagnostics.best_score is None
+                            else f"{diagnostics.best_score:.3f}"
+                        )
+
+                        score_gap = (
+                            "-"
+                            if diagnostics.score_gap is None
+                            else f"{diagnostics.score_gap:.3f}"
+                        )
+
+                        print(
+                            "REACQ DIAG"
+                            f" | miss={target.missing_frames}"
+                            f" | same={diagnostics.same_class_tracks}"
+                            f" | cand={diagnostics.candidate_count}"
+                            f" | center={diagnostics.rejected_center}"
+                            f" | scale={diagnostics.rejected_scale}"
+                            f" | aspect={diagnostics.rejected_aspect}"
+                            f" | invalid={diagnostics.rejected_invalid_geometry}"
+                            f" | best={best_score}"
+                            f" | gap={score_gap}"
+                            f" | ambiguous={diagnostics.rejected_ambiguous}"
+                        )
+
+                timed_out = (
+                    previous_target_status is TargetStatus.LOST
+                    and target.status is TargetStatus.IDLE
+                    and not cleared_by_operator
+                )
+
                 if (
                     previous_target_status is TargetStatus.LOCKED
                     and target.status is TargetStatus.LOST
                 ):
                     self.notice.emit(f"TARGET LOST | ID {previous_target_id}")
+
+                    motion = motion_memory.estimate
+
+                    print(
+                        "LOSS MOTION"
+                        f" | dx={motion.dx_norm_per_frame:+.5f}"
+                        f" | dy={motion.dy_norm_per_frame:+.5f}"
+                        f" | dir=("
+                        f"{motion.direction_x:+d},"
+                        f"{motion.direction_y:+d})"
+                        f" | samples={motion.sample_count}"
+                    )
 
                 elif (
                     previous_target_status is TargetStatus.LOST
@@ -314,6 +438,12 @@ class VisionRuntimeWorker(QObject):
                     and not cleared_by_operator
                 ):
                     self.notice.emit("TARGET TIMEOUT -> IDLE")
+
+                search_state = search_controller.update(
+                    target_status=target.status,
+                    missing_frames=target.missing_frames,
+                    timed_out=timed_out,
+                )
 
                 frame_height, frame_width = packet.image.shape[:2]
 
@@ -393,12 +523,6 @@ class VisionRuntimeWorker(QObject):
                     packet.image,
                     track_batch,
                     target,
-                )
-
-                search_state = (
-                    SearchState.REACQUIRE
-                    if target.status is TargetStatus.LOST
-                    else SearchState.INACTIVE
                 )
 
                 target_track = target.track
